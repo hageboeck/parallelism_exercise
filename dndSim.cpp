@@ -34,24 +34,26 @@ namespace dndSim{
     unsigned short int roll2d20dl(){
         unsigned short int roll1 = roll1d20();
         unsigned short int roll2 = roll1d20();
-        return ( roll1 > roll2 ) ? roll1 : roll2;
+        return std::max(roll1,roll2);
     }
 
     unsigned short int roll2d20dh(){
         unsigned short int roll1 = roll1d20();
         unsigned short int roll2 = roll1d20();
-        return ( roll1 < roll2 ) ? roll1 : roll2;
+        return std::min(roll1,roll2);
     }
 
-void character::setStats(std::vector<unsigned short int> stats = {10,10,10,10,10,10}) {
+void character::setStats(std::vector<unsigned short int> statVec = {10,10,10,10,10,10}) {
+    this->stats = {10,10,10,10,10,10};
     for( unsigned short int i = 0; i < stats.size(); i++ ){
-        this->stats[statNames[i]] = stats[i];
+        this->stats[i] = statVec[i];
     }
 }
 
-void character::setSaves(std::vector<std::string> saveNames) {
-    for( auto saveName : statNames ){
-        this->saves[saveName] = ( stats[saveName] / 2 ) - 5; 
+void character::setSaves(std::vector<unsigned short int> saveNames) {
+    this->saves = {0,0,0,0,0,0};
+    for( unsigned short int k = 0 ; k < 6 ; ++k ){
+        this->saves[k] = ( stats[k] / 2 ) - 5; 
     }
     for( auto saveName : saveNames ){
         this->saves[saveName] += profBonus;
@@ -59,7 +61,7 @@ void character::setSaves(std::vector<std::string> saveNames) {
 }
 
 void character::setAC(unsigned short int baseAc, bool includeDex) {
-    this->ac = baseAc + unsigned( includeDex ) * (( stats["dex"] / 2 ) - 5);
+    this->ac = baseAc + unsigned( includeDex ) * (( stats[1] / 2 ) - 5);
 }
 
 void character::setProcBonus() {
@@ -67,58 +69,41 @@ void character::setProcBonus() {
 }
 
 void character::setSaveDC() {
-    this->saveDC = 8 + (stats[atkStat] / 2) - 5 + profBonus;
+    this->saveDC = 8 + this->atkBonus + this->profBonus;
 }
 
 character::character() {
-    this->idName = "character";
     this->lvlCR = 1;
     setStats();
     setProcBonus();
-    this->atkStat = "str";
+    this->atkStat = 0;
     setSaves();
     setAC();
     this->causeSave = false;
     setSaveDC();
 }
 
-character::character(std::string idName, unsigned short int lvlCR, std::vector<unsigned short int> inputStats, bool causeSave, std::vector<std::string> saveNames, std::string atkStat, unsigned short int baseAc, bool includeDex) {
-    this->idName = idName;
+character::character(unsigned short int lvlCR, std::vector<unsigned short int> inputStats, bool causeSave, std::vector<unsigned short int> saveNames, unsigned short int atkStat, unsigned short int baseAc, bool includeDex) {
     this->lvlCR = lvlCR;
     setStats( inputStats );
     setProcBonus();
     this->atkStat = atkStat;
     setSaves( saveNames );
     setAC( baseAc, includeDex );
+    setAtkBonus();
     this->causeSave = causeSave;
     setSaveDC();
-}
-
-character::character(std::string idName, unsigned short int lvlCR, std::map<std::string,unsigned short int> inputStats, std::vector<std::string> saveNames, bool causeSave, std::string atkStat, unsigned short int baseAc, bool includeDex) {
-    this->idName = idName;
-    this->lvlCR = lvlCR;
-    this->stats = inputStats;
-    setProcBonus();
-    this->atkStat = atkStat;
-    setSaves( saveNames );
-    setAC( baseAc, includeDex );
-    this->causeSave = causeSave;
-    setSaveDC();
-}
-
-std::string character::getName() {
-    return this->idName;
 }
 
 unsigned short int character::getLvl() {
     return this->lvlCR;
 }
 
-std::map<std::string, unsigned short int> character::getStats() {
+std::vector<unsigned short int> character::getStats() {
     return this->stats;
 }
 
-std::map<std::string, unsigned short int> character::getSaves() {
+std::vector<unsigned short int> character::getSaves() {
     return this->saves;
 }
 
@@ -134,17 +119,22 @@ bool character::attack(character& enemy) {
     if( this->causeSave ){
         return enemy.save( atkStat, saveDC );
     } else {
-        return (roll1d20() + stats[atkStat] + profBonus >= enemy.getAC());
+        return (roll1d20() + this->atkBonus + this->profBonus >= enemy.getAC());
     }
     return false;
 }
 
 bool character::attack(std::shared_ptr<character> enemy) {
+    if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
 
-bool character::save(std::string saveStat, unsigned short int saveDC) {
+bool character::save(unsigned short int saveStat, unsigned short int saveDC) {
     return (roll1d20() + stats[saveStat] >= saveDC);
+}
+
+void character::setAtkBonus() {
+    this->atkBonus = (short)(stats[atkStat]/2) - 5;
 }
 
 void barbarian::initializeLvlStats() {
@@ -153,34 +143,41 @@ void barbarian::initializeLvlStats() {
         {20,14,16,8,12,10}, {20,14,18,8,12,10}, {20,14,20,8,12,10}, {20,14,20,8,12,10}
     };
 }
-barbarian::barbarian() : character("barbarian", 1, {16,14,14,8,12,10}, false, {{"str","con"}}, "str", 10, true), rage(2) {
+barbarian::barbarian() : character(1, {16,14,14,8,12,10}, false, {0,2}, 0, 10, true), rage(2) {
     initializeLvlStats();
     setStats(lvlStats[0]);
-    setSaves({"str", "con"});
+    setProcBonus();
+    setSaves({4,5});
+    setAtkBonus();
 }
-barbarian::barbarian(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character("barbarian", lvlCR, stats, false, {{"str","con"}}, "str", 10, true), rage(2) {
+barbarian::barbarian(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {0,2},0, 10, true), rage(2) {
     initializeLvlStats();
     rage += unsigned(lvlCR > 8) + unsigned(lvlCR > 15);
     setStats(lvlStats[unsigned(lvlCR) / 4 + unsigned(lvlCR > 18)]);
-    setSaves({"str", "con"});
+    setProcBonus();
+    setSaves({4,5});
+    setAtkBonus();
 }
-barbarian::barbarian(int lvlCR, std::vector<unsigned short int> stats) : character("barbarian", lvlCR, stats, false, {{"str","con"}}, "str", 10, true), rage(2) {
+barbarian::barbarian(int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {0,2}, 0, 10, true), rage(2) {
     initializeLvlStats();
     rage += unsigned(lvlCR > 8) + unsigned(lvlCR > 15);
     setStats(lvlStats[unsigned(lvlCR) / 4 + unsigned(lvlCR > 18)]);
-    setSaves({"str", "con"});
+    setProcBonus();
+    setSaves({4,5});
+    setAtkBonus();
 }
 void barbarian::setAC(unsigned short int baseAc, bool includeDex) {
-    this->ac = baseAc + ((stats["dex"] / 2) - 5) + ((stats["con"] / 2) - 5);
+    this->ac = baseAc + ((stats[1] / 2) - 5) + ((stats[2] / 2) - 5);
 }
 bool barbarian::attack(character& enemy) {
-    if (lvlCR == 1) {
-        return (roll1d20() + stats["str"] + profBonus + rage >= enemy.getAC());
+    if (this->lvlCR == 1) {
+        return (roll1d20() + this->atkBonus + this->profBonus + this->rage >= enemy.getAC());
     } else {
-        return (roll2d20dl() + stats["str"] + profBonus + rage >= enemy.getAC());
+        return (roll2d20dl() + this->atkBonus + this->profBonus + this->rage >= enemy.getAC());
     }
 }
 bool barbarian::attack(std::shared_ptr<character> enemy) {
+    if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
 
@@ -190,32 +187,44 @@ void cleric::initializeLvlStats() {
         {10,16,12,8,20,14}, {10,16,12,8,20,14}, {10,16,12,8,20,14}, {10,16,12,8,20,14}
     };
 }
-cleric::cleric() : character("cleric", 1, {10,14,12,8,16,14}, true, {{"wis","cha"}}, "wis", 10, true), mediumArmorMaster(false) {
+cleric::cleric() : character(1, {10,14,12,8,16,14}, true, {4,5}, 4, 10, true), mediumArmorMaster(false) {
     initializeLvlStats();
     setStats(lvlStats[0]);
-    setSaves({"wis","cha"});
+    setSaves({4,5});
+    setProcBonus();
+    setAtkBonus();
     setSaveDC();
     setAC();
 }
-cleric::cleric(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character("cleric", lvlCR, stats, true, {{"wis","cha"}}, "wis", 10, true), mediumArmorMaster(false) {
+cleric::cleric(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, true, {4,5}, 4, 10, true), mediumArmorMaster(false) {
     initializeLvlStats();
     setStats(lvlStats[unsigned(lvlCR / 4) + unsigned(lvlCR > 18)]);
     mediumArmorMaster = lvlCR > 15;
-    setSaves({"wis","cha"});
+    setProcBonus();
+    setAtkBonus();
+    setSaves({4,5});
     setSaveDC();
     setAC();
 }
-cleric::cleric(int lvlCR, std::vector<unsigned short int> stats) : character("cleric", lvlCR, stats, true, {{"wis","cha"}}, "wis", 10, true), mediumArmorMaster(false) {
+cleric::cleric(int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, true, {4,5}, 4, 10, true), mediumArmorMaster(false) {
     initializeLvlStats();
     setStats(lvlStats[unsigned(lvlCR / 4) + unsigned(lvlCR > 18)]);
     mediumArmorMaster = lvlCR > 15;
-    setSaves({"wis","cha"});
+    setProcBonus();
+    setAtkBonus();
+    setSaves({4,5});
     setSaveDC();
     setAC();
 }
-
+bool cleric::attack(character& enemy) {
+    return enemy.save(4, saveDC);
+}
+bool cleric::attack(std::shared_ptr<character> enemy) {
+    if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
+    return attack(*enemy);
+}
 void cleric::setAC(unsigned short int baseAc, bool includeDex) {
-    this->ac = baseAc + std::min(((stats["dex"] / 2) - 5), 2 + int(mediumArmorMaster));
+    this->ac = baseAc + std::min(((stats[1] / 2) - 5), 2 + int(mediumArmorMaster));
 }
 
 void rogue::initializeLvlStats() {
@@ -224,22 +233,35 @@ void rogue::initializeLvlStats() {
         {8,20,12,14,14,10}, {8,20,12,14,14,10}, {8,20,12,14,14,10}, {8,20,12,14,14,10}
     };
 }
-rogue::rogue() : character("rogue", 1, {8,16,12,14,14,10}, false, {{"dex","int"}}, "dex", 11, true) {
+rogue::rogue() : character(1, {8,16,12,14,14,10}, false, {1,3}, 1, 11, true) {
     initializeLvlStats();
     setStats(lvlStats[0]);
     setAC(11);
 }
-rogue::rogue(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character("rogue", lvlCR, stats, false, {{"dex","int"}}, "dex", 11, true) {
+rogue::rogue(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {1,3}, 1, 11, true) {
     initializeLvlStats();
     setStats(lvlStats[unsigned(lvlCR / 4) + unsigned(lvlCR > 18)]);
+    setProcBonus();
+    setAtkBonus();
     setAC(11 + unsigned(lvlCR > 2));
-    if(lvlCR > 14) setSaves({"dex","int","wis"});
+    setSaves({1,3});
+    if(lvlCR > 14) setSaves({1,3,4});
 }
-rogue::rogue(int lvlCR, std::vector<unsigned short int> stats) : character("rogue", lvlCR, stats, false, {{"dex","int"}}, "dex", 11, true) {
+rogue::rogue(int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {1,3}, 1, 11, true) {
     initializeLvlStats();
     setStats(lvlStats[unsigned(lvlCR / 4) + unsigned(lvlCR > 18)]);
+    setProcBonus();
+    setAtkBonus();
     setAC(11 + unsigned(lvlCR > 2));
-    if(lvlCR > 14) setSaves({"dex","int","wis"});
+    setSaves({1,3});
+    if(lvlCR > 14) setSaves({1,3,4});
+}
+bool rogue::attack(character& enemy) {
+    return (roll1d20() + atkBonus + profBonus >= enemy.getAC());
+}
+bool rogue::attack(std::shared_ptr<character> enemy) {
+    if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
+    return attack(*enemy);
 }
 
 void wizard::initializeLvlStats() {
@@ -248,26 +270,39 @@ void wizard::initializeLvlStats() {
         {8,16,10,20,14,12}, {8,18,10,20,14,12}, {8,20,10,20,14,12}, {8,20,10,20,14,12}
     };
 }
-wizard::wizard() : character("wizard", 1, {8,14,10,16,14,12}, false, {{"int","wis"}}, "int", 10, true) {
+wizard::wizard() : character(1, {8,14,10,16,14,12}, false, {3,4}, 3, 10, true) {
     initializeLvlStats();
     setStats(lvlStats[0]);
-    setSaves({"int", "wis"});
+    setProcBonus();
+    setAtkBonus();
+    setSaves({3,4});
     setSaveDC();
     setAC(10);
 }
-wizard::wizard(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character("wizard", lvlCR, stats, false, {{"int", "wis"}}, "int", 10, true) {
+wizard::wizard(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {3,4}, 3, 10, true) {
     initializeLvlStats();
     setStats(lvlStats[(unsigned short)(lvlCR / 4) + (unsigned short)(lvlCR > 18)]);
-    setSaves({"int", "wis"});
+    setProcBonus();
+    setAtkBonus();
+    setSaves({3,4});
     setSaveDC();
     setAC(10 + 3 * unsigned(lvlCR > 1));
 }
-wizard::wizard(int lvlCR, std::vector<unsigned short int> stats) : character("wizard", lvlCR, stats, false, {{"int", "wis"}}, "int", 10, true) {
+wizard::wizard(int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {3,4}, 3, 10, true) {
     initializeLvlStats();
     setStats(lvlStats[(unsigned short)(lvlCR / 4) + (unsigned short)(lvlCR > 18)]);
-    setSaves({"int", "wis"});
+    setProcBonus();
+    setAtkBonus();
+    setSaves({3,4});
     setSaveDC();
     setAC(10 + 3 * unsigned(lvlCR > 1));
+}
+bool wizard::attack(character& enemy) {
+    return (roll1d20() + atkBonus + profBonus >= enemy.getAC());
+}
+bool wizard::attack(std::shared_ptr<character> enemy) {
+    if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
+    return attack(*enemy);
 }
 
     std::map<unsigned short int, barbarian> barbarian_premade = {
@@ -305,23 +340,23 @@ wizard::wizard(int lvlCR, std::vector<unsigned short int> stats) : character("wi
 #include "all_monsters.txt"
 
     std::shared_ptr<dndSim::npc> random_encounter_any( unsigned short int lvlCR ){
-        auto nr = dndSim::genRNG(monsters[lvlCR].size());
-        return monsters[lvlCR][nr];
+        auto nr = dndSim::genRNG(monsters[lvlCR-1].size());
+        return monsters[lvlCR-1][nr];
     }
 
     std::shared_ptr<dndSim::npc> random_encounter_spellcaster( unsigned short int lvlCR ){
-        auto nr = dndSim::genRNG(spell_monsters[lvlCR].size());
-        return spell_monsters[lvlCR][nr];
+        auto nr = dndSim::genRNG(spell_monsters[lvlCR-1].size());
+        return spell_monsters[lvlCR-1][nr];
     }
 
     std::shared_ptr<dndSim::npc> random_encounter_regular( unsigned short int lvlCR ){
-        auto nr = dndSim::genRNG(non_spell_monsters[lvlCR].size());
-        return non_spell_monsters[lvlCR][nr];
+        auto nr = dndSim::genRNG(non_spell_monsters[lvlCR-1].size());
+        return non_spell_monsters[lvlCR-1][nr];
     }
 
     std::shared_ptr<dndSim::npc> random_encounter( int lvlCR, std::string type ){
         if (lvlCR < 1 || lvlCR > 20) throw std::invalid_argument("Currently only CRs of integers 1 through 20 are implemented.");
-        if (type != "any" || type != "spellcaster" || type != "regular" ) throw std::invalid_argument("Enemy type must be 'any', 'spellcaster', or 'regular'.");
+        if (!(type == "any" || type == "spellcaster" || type == "regular" )) throw std::invalid_argument("Enemy type must be 'any', 'spellcaster', or 'regular'.");
         if (type == "any") return random_encounter_any(lvlCR);
         if (type == "spellcaster") return random_encounter_spellcaster(lvlCR);
         if (type == "regular") return random_encounter_regular(lvlCR);

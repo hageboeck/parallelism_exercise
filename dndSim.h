@@ -25,10 +25,11 @@
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
+#include <iostream>
 
 namespace dndSim{
 
-    const std::vector<std::string> statNames = {"str", "dex", "con", "int", "wis", "cha"};
+    const std::map<std::string,unsigned short int> statNames = {{"str",0}, {"dex",1}, {"con",2}, {"int",3}, {"wis",4}, {"cha",5}};
 
     unsigned short int roll1d20();
     unsigned short int roll2d20dl();
@@ -43,33 +44,32 @@ namespace dndSim{
 
     class character {
     protected:
-        std::string idName;
         unsigned short int lvlCR = 0;
-        std::map<std::string, unsigned short int> stats;
-        std::map<std::string, unsigned short int> saves;
-        std::string atkStat = "str";
+        std::vector<unsigned short int> stats;
+        std::vector<unsigned short int> saves;
+        unsigned short int atkStat = 0;
+        void setAtkBonus();
         unsigned short int profBonus = 2;
+        short int atkBonus = 0;
         unsigned short int ac = 10;
         bool causeSave = false;
         unsigned short int saveDC = 10;
         void setStats(std::vector<unsigned short int> stats);
-        void setSaves(std::vector<std::string> saveNames = {});
+        void setSaves(std::vector<unsigned short int> saveNames = {});
         virtual void setAC(unsigned short int baseAc = 10, bool includeDex = true);
         void setProcBonus();
         void setSaveDC();
     public:
         character();
-        character(std::string idName, unsigned short int lvlCR, std::vector<unsigned short int> stats = {10,10,10,10,10,10}, bool causeSave = false, std::vector<std::string> saveNames = {}, std::string atkStat = "str", unsigned short int baseAc = 10, bool includeDex = false);
-        character(std::string idName, unsigned short int lvlCR, std::map<std::string,unsigned short int> stats, std::vector<std::string> saveNames = {}, bool causeSave = false, std::string atkStat = "str", unsigned short int baseAc = 10, bool includeDex = false);
-        std::string getName();
+        character(unsigned short int lvlCR, std::vector<unsigned short int> stats = {10,10,10,10,10,10}, bool causeSave = false, std::vector<unsigned short int> saveNames = {}, unsigned short int atkStat = 0, unsigned short int baseAc = 10, bool includeDex = false);
         unsigned short int getLvl();
-        std::map<std::string, unsigned short int> getStats();
-        std::map<std::string, unsigned short int> getSaves();
+        std::vector<unsigned short int> getStats();
+        std::vector<unsigned short int> getSaves();
         unsigned short int getProfBonus();
         unsigned short int getAC();
         virtual bool attack(character& enemy);
         virtual bool attack(std::shared_ptr<character> enemy);
-        virtual bool save(std::string saveStat, unsigned short int saveDC);
+        virtual bool save(unsigned short int saveStat, unsigned short int saveDC);
     };
 
 
@@ -95,6 +95,7 @@ namespace dndSim{
         cleric();
         cleric(unsigned short int lvlCR, std::vector<unsigned short int> stats = {10,14,12,8,16,14});
         cleric(int lvlCR, std::vector<unsigned short int> stats = {10,14,12,8,16,14});
+        bool attack( character& enemy ) override;
         bool attack( std::shared_ptr<character> enemy );
     protected:
         void setAC(unsigned short int baseAc = 13, bool includeDex = true) override;
@@ -108,6 +109,8 @@ namespace dndSim{
         rogue();
         rogue(unsigned short int lvlCR, std::vector<unsigned short int> stats = {8,16,12,14,14,10});
         rogue(int lvlCR, std::vector<unsigned short int> stats = {8,16,12,14,14,10});
+        bool attack( character& enemy ) override;
+        bool attack( std::shared_ptr<character> enemy );
     private:
         void initializeLvlStats(); 
     };
@@ -118,6 +121,8 @@ namespace dndSim{
         wizard();
         wizard(unsigned short int lvlCR, std::vector<unsigned short int> stats = {8,14,10,16,14,12});
         wizard(int lvlCR, std::vector<unsigned short int> stats = {8,14,10,16,14,12});
+        bool attack( character& enemy ) override;
+        bool attack( std::shared_ptr<character> enemy );
     private:
         void initializeLvlStats(); 
     };

@@ -16,7 +16,6 @@
 //==============================================================================
 
 #include "dndSim.h"
-#include <iostream>
 #include <numeric>
 #include <chrono>
 
@@ -28,34 +27,37 @@ void usage(){
     std::cout << "Have fun!" << std::endl;
 }
 
-std::vector<unsigned short int> test_levels = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+const std::vector<unsigned short int> test_levels = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 
-std::vector<std::vector<std::vector<bool>>>& initializeHitVector(const int& n) {
-    const int dim1 = 20;
-    const int dim2 = 20;
-
-    std::vector<std::vector<std::vector<bool>>> hitVector;
-
-    // Resize the outer vector to have 'n' 2D vectors
-    hitVector.resize(dim1);
-
-    for (int i = 0; i < dim1; ++i) {
-        // Resize each 2D vector to have 20 rows
-        hitVector[i].resize(dim2);
-        for (int j = 0; j < n; ++j) {
-            // Resize each row to have 20 columns initialized to 'false'
-            hitVector[i][j].resize(n, false);
-        }
-    }
+std::vector<std::vector<std::vector<bool>>> initializeHitVector(int n) {
+    const int dim1 = test_levels.size();
+    const int dim2 = test_levels.size();
+    std::vector<std::vector<std::vector<bool>>> hitVector(dim1, std::vector<std::vector<bool>>(dim2, std::vector<bool>(n, false)));
     return hitVector;
 }
+
+void plotAsciiHeatmap(float data[20][20]) {
+    for (int i = 19; i > 0; --i) {
+        for (int j = 0; j < 20; ++j) {
+            // Simple thresholding to represent different heat levels
+            char heat = ' ';
+            if (data[i][j] > 0.75) heat = '#';
+            else if (data[i][j] > 0.5) heat = '+';
+            else if (data[i][j] > 0.25) heat = '-';
+            std::cout << heat << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 
 int main(int argc, char* argv[]){
     if (argc < 2){
         usage();
         return 1;
     }
-    int n = std::stoi(std::string(argv[1]));
+    std::string nArg = argv[1];
+    int n = std::stoi(argv[1]);
     if (n < 1){
         usage();
         return 1;
@@ -78,10 +80,10 @@ int main(int argc, char* argv[]){
     for( size_t k = 0; k < n ; ++k){
         for ( auto lvlNPC : test_levels ){
             for( auto lvlPC : test_levels ){
-                auto npc = dndSim::random_encounter(lvlNPC);
+                auto npc = dndSim::random_encounter(lvlNPC, "any");
                 barbarian_hits[lvlNPC-1][lvlPC-1][k] = dndSim::barbarian_premade[lvlPC].attack(npc);
-                cleric_hits[lvlNPC-1][lvlPC-1][k] = dndSim::cleric_premade[lvlPC].attack(npc);
-                rogue_hits[lvlNPC-1][lvlPC-1][k] = dndSim::rogue_premade[lvlPC].attack(npc);
+                cleric_hits[lvlNPC-1][lvlPC-1][k] = dndSim::cleric_premade[lvlPC].attack(npc); 
+                rogue_hits[lvlNPC-1][lvlPC-1][k] = dndSim::rogue_premade[lvlPC].attack(npc); 
                 wizard_hits[lvlNPC-1][lvlPC-1][k] = dndSim::wizard_premade[lvlPC].attack(npc);
             }
         }
@@ -94,16 +96,16 @@ int main(int argc, char* argv[]){
 
     for (auto lvlPC : test_levels){
         for(auto lvlNPC : test_levels){
-            barbarian_hit_rate[lvlPC-1][lvlNPC-1] = static_cast<float>(std::accumulate(
+            barbarian_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                 barbarian_hits[lvlNPC-1][lvlPC-1].begin(), barbarian_hits[lvlNPC-1][lvlPC-1].end(), 0))
                  / static_cast<float>(n);
-            cleric_hit_rate[lvlPC-1][lvlNPC-1] = static_cast<float>(std::accumulate(
+            cleric_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                 cleric_hits[lvlNPC-1][lvlPC-1].begin(), cleric_hits[lvlNPC-1][lvlPC-1].end(), 0))
                  / static_cast<float>(n);
-            rogue_hit_rate[lvlPC-1][lvlNPC-1] = static_cast<float>(std::accumulate(
+            rogue_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                 rogue_hits[lvlNPC-1][lvlPC-1].begin(), rogue_hits[lvlNPC-1][lvlPC-1].end(), 0))
                  / static_cast<float>(n);
-            wizard_hit_rate[lvlPC-1][lvlNPC-1] = static_cast<float>(std::accumulate(
+            wizard_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                 wizard_hits[lvlNPC-1][lvlPC-1].begin(), wizard_hits[lvlNPC-1][lvlPC-1].end(), 0))
                  / static_cast<float>(n);
         }
@@ -112,6 +114,16 @@ int main(int argc, char* argv[]){
     auto t2 = high_resolution_clock::now();
 
     duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << "BARBARIAN" << std::endl;
+    plotAsciiHeatmap(barbarian_hit_rate);
+    std::cout << "CLERIC" << std::endl;
+    plotAsciiHeatmap(cleric_hit_rate);
+    std::cout << "ROGUE" << std::endl;
+    plotAsciiHeatmap(rogue_hit_rate);
+    std::cout << "WIZARD" << std::endl;
+    plotAsciiHeatmap(wizard_hit_rate);
+    std::cout << std::endl;
 
     std::cout << "Done testing dndSim for " << n << " points per character and level." << std::endl;
     std::cout << "Time taken: " << ms_double.count() << " ms" << std::endl;
