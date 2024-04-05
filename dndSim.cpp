@@ -117,7 +117,7 @@ unsigned short int character::getAC() {
 
 bool character::attack(character& enemy) {
     if( this->causeSave ){
-        return enemy.save( atkStat, saveDC );
+        return !(enemy.save( atkStat, saveDC ));
     } else {
         return (roll1d20() + this->atkBonus + this->profBonus >= enemy.getAC());
     }
@@ -130,7 +130,7 @@ bool character::attack(std::shared_ptr<character> enemy) {
 }
 
 bool character::save(unsigned short int saveStat, unsigned short int saveDC) {
-    return (roll1d20() + stats[saveStat] >= saveDC);
+    return (roll1d20() + saves[saveStat] >= saveDC);
 }
 
 void character::setAtkBonus() {
@@ -147,7 +147,7 @@ barbarian::barbarian() : character(1, {16,14,14,8,12,10}, false, {0,2}, 0, 10, t
     initializeLvlStats();
     setStats(lvlStats[0]);
     setProcBonus();
-    setSaves({4,5});
+    setSaves({0,2});
     setAtkBonus();
 }
 barbarian::barbarian(unsigned short int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {0,2},0, 10, true), rage(2) {
@@ -155,7 +155,7 @@ barbarian::barbarian(unsigned short int lvlCR, std::vector<unsigned short int> s
     rage += unsigned(lvlCR > 8) + unsigned(lvlCR > 15);
     setStats(lvlStats[unsigned(lvlCR) / 4 + unsigned(lvlCR > 18)]);
     setProcBonus();
-    setSaves({4,5});
+    setSaves({0,2});
     setAtkBonus();
 }
 barbarian::barbarian(int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR, stats, false, {0,2}, 0, 10, true), rage(2) {
@@ -163,7 +163,7 @@ barbarian::barbarian(int lvlCR, std::vector<unsigned short int> stats) : charact
     rage += unsigned(lvlCR > 8) + unsigned(lvlCR > 15);
     setStats(lvlStats[unsigned(lvlCR) / 4 + unsigned(lvlCR > 18)]);
     setProcBonus();
-    setSaves({4,5});
+    setSaves({0,2});
     setAtkBonus();
 }
 void barbarian::setAC(unsigned short int baseAc, bool includeDex) {
@@ -217,7 +217,7 @@ cleric::cleric(int lvlCR, std::vector<unsigned short int> stats) : character(lvl
     setAC();
 }
 bool cleric::attack(character& enemy) {
-    return enemy.save(4, saveDC);
+    return !(enemy.save(4, saveDC));
 }
 bool cleric::attack(std::shared_ptr<character> enemy) {
     if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");

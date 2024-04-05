@@ -38,6 +38,8 @@ std::vector<std::vector<std::vector<bool>>> initializeHitVector(int n) {
 
 void plotAsciiHeatmap(float data[20][20]) {
     for (int i = 19; i > 0; --i) {
+        std::cout << i+1 << " ";
+        if(i < 10) std::cout << " ";
         for (int j = 0; j < 20; ++j) {
             // Simple thresholding to represent different heat levels
             char heat = ' ';
@@ -48,6 +50,10 @@ void plotAsciiHeatmap(float data[20][20]) {
         }
         std::cout << std::endl;
     }
+    for (int j = 0; j < 20; ++j) {
+        std::cout << " " << j+1;
+    }
+    std::cout << std::endl;
 }
 
 
