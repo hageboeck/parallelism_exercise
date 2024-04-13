@@ -18,6 +18,8 @@
 #include "dndSim.h"
 #include <numeric>
 #include <chrono>
+#include <functional>
+#include <fstream>
 
 void usage(){
     std::cout << "Welcome to the TAD&DSIM test suite!" << std::endl;
@@ -29,17 +31,17 @@ void usage(){
 
 const std::vector<unsigned short int> test_levels = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 
-std::vector<std::vector<std::vector<bool>>> initializeHitVector(int n) {
+std::shared_ptr<std::vector<std::vector<std::vector<bool>>>> initializeHitVector(int n) {
     const int dim1 = test_levels.size();
     const int dim2 = test_levels.size();
-    std::vector<std::vector<std::vector<bool>>> hitVector(dim1, std::vector<std::vector<bool>>(dim2, std::vector<bool>(n, false)));
+    auto hitVector = std::make_shared<std::vector<std::vector<std::vector<bool>>>>(dim1, std::vector<std::vector<bool>>(dim2, std::vector<bool>(n, false)));
     return hitVector;
 }
 
 void plotAsciiHeatmap(float data[20][20]) {
     for (int i = 19; i > 0; --i) {
         std::cout << i+1 << " ";
-        if(i < 10) std::cout << " ";
+        if(i < 9) std::cout << " ";
         for (int j = 0; j < 20; ++j) {
             // Simple thresholding to represent different heat levels
             char heat = ' ';
@@ -55,7 +57,8 @@ void plotAsciiHeatmap(float data[20][20]) {
     }
     std::cout << std::endl;
 }
-
+// Simplify some of the main by adding an alias for the attack function
+using attack = std::function<bool(unsigned short int,std::shared_ptr<dndSim::npc>)>;
 
 int main(int argc, char* argv[]){
     if (argc < 2){
@@ -78,42 +81,75 @@ int main(int argc, char* argv[]){
 
     auto t1 = high_resolution_clock::now();
 
+    // Define the types of attacks of the pre-built characters
+    attack barbarian = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::barbarian_premade[lvl].attack(npc);
+    };
+    attack cleric = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::cleric_premade[lvl].attack(npc);
+    };
+    attack rogue = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::rogue_premade[lvl].attack(npc);
+    };
+    attack wizard = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::wizard_premade[lvl].attack(npc);
+    };
+
+    // Initialize the hit vectors for each character type
     auto barbarian_hits = initializeHitVector(n);
     auto cleric_hits = initializeHitVector(n);
     auto rogue_hits = initializeHitVector(n);
     auto wizard_hits = initializeHitVector(n);
+    // Create a vector of the pre-built characters and their attack functions
+    auto pre_builds = std::vector<attack>(4);
+    pre_builds[0] = barbarian;
+    pre_builds[1] = cleric;
+    pre_builds[2] = rogue;
+    pre_builds[3] = wizard;
+    // Create a vector of the hit vectors for each character class
+    auto hits = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<bool>>> > >(4);
+    hits[0] = barbarian_hits;
+    hits[1] = cleric_hits;
+    hits[2] = rogue_hits;
+    hits[3] = wizard_hits;
 
-    for( size_t k = 0; k < n ; ++k){
+    // Run the simulation for each character class and level
+    // The actual loop order is pretty irrelevant, so long as we get all the combinations
+    // Just don't mess up the indices
+    // The outer loop is for the number of battles to simulate
+    // Couldn't this be done in parallel?
+    // --- Not with this loop order
+    for( int k = 0; k < n ; ++k){
+        // The next loop is for the enemy levels
         for ( auto lvlNPC : test_levels ){
-            for( auto lvlPC : test_levels ){
-                auto npc = dndSim::random_encounter(lvlNPC, "any");
-                barbarian_hits[lvlNPC-1][lvlPC-1][k] = dndSim::barbarian_premade[lvlPC].attack(npc);
-                cleric_hits[lvlNPC-1][lvlPC-1][k] = dndSim::cleric_premade[lvlPC].attack(npc); 
-                rogue_hits[lvlNPC-1][lvlPC-1][k] = dndSim::rogue_premade[lvlPC].attack(npc); 
-                wizard_hits[lvlNPC-1][lvlPC-1][k] = dndSim::wizard_premade[lvlPC].attack(npc);
+            // The next loop is for the character classes
+            // Maybe we could multithread here?
+            for ( auto l = 0 ; l < 4 ; ++l ){
+                // The innermost loop is for the player character levels
+                for( auto lvlPC : test_levels ){
+                    auto npc = dndSim::random_encounter(lvlNPC, "any");
+                    hits[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds[l](lvlPC, npc);
+                }
             }
         }
     }
 
+    // Initialise the actual hit rate matrices
     float barbarian_hit_rate[20][20];
     float cleric_hit_rate[20][20];
     float rogue_hit_rate[20][20];
     float wizard_hit_rate[20][20];
+    std::vector<float(*)[20]> PC_hit_rate = {barbarian_hit_rate, cleric_hit_rate, rogue_hit_rate, wizard_hit_rate};    //float PC_hit_rate[4][20][20];
 
+    // Calculate the hit rates
+    // Here, the loop order is PC lvl > NPC lvl > PC class
     for (auto lvlPC : test_levels){
         for(auto lvlNPC : test_levels){
-            barbarian_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
-                barbarian_hits[lvlNPC-1][lvlPC-1].begin(), barbarian_hits[lvlNPC-1][lvlPC-1].end(), 0))
-                 / static_cast<float>(n);
-            cleric_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
-                cleric_hits[lvlNPC-1][lvlPC-1].begin(), cleric_hits[lvlNPC-1][lvlPC-1].end(), 0))
-                 / static_cast<float>(n);
-            rogue_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
-                rogue_hits[lvlNPC-1][lvlPC-1].begin(), rogue_hits[lvlNPC-1][lvlPC-1].end(), 0))
-                 / static_cast<float>(n);
-            wizard_hit_rate[lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
-                wizard_hits[lvlNPC-1][lvlPC-1].begin(), wizard_hits[lvlNPC-1][lvlPC-1].end(), 0))
-                 / static_cast<float>(n);
+            for (int l = 0; l < 4; ++l){
+                PC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
+                    hits[l]->at(lvlNPC-1)[lvlPC-1].begin(), hits[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
+                     / static_cast<float>(n);
+            }
         }
     }
 
@@ -121,15 +157,29 @@ int main(int argc, char* argv[]){
 
     duration<double, std::milli> ms_double = t2 - t1;
 
-    std::cout << "BARBARIAN" << std::endl;
-    plotAsciiHeatmap(barbarian_hit_rate);
-    std::cout << "CLERIC" << std::endl;
-    plotAsciiHeatmap(cleric_hit_rate);
-    std::cout << "ROGUE" << std::endl;
-    plotAsciiHeatmap(rogue_hit_rate);
-    std::cout << "WIZARD" << std::endl;
-    plotAsciiHeatmap(wizard_hit_rate);
-    std::cout << std::endl;
+    auto filames = std::vector<std::string>{"barbarian_hit_rate.csv", "cleric_hit_rate.csv", "rogue_hit_rate.csv", "wizard_hit_rate.csv"};
+
+    // Export the hit rates to CSV files for plotting
+    for (int l = 0; l < 4; ++l){
+        std::ofstream file(filames[l]);
+        for (int i = 0; i < 20; ++i){
+            for (int j = 0; j < 20; ++j){
+                file << PC_hit_rate[l][i][j] << ",";
+            }
+            file << std::endl;
+        }
+        file.close();
+    }
+
+    // std::cout << "BARBARIAN" << std::endl;
+    // plotAsciiHeatmap(PC_hit_rate[0]);
+    // std::cout << "CLERIC" << std::endl;
+    // plotAsciiHeatmap(PC_hit_rate[1]);
+    // std::cout << "ROGUE" << std::endl;
+    // plotAsciiHeatmap(PC_hit_rate[2]);
+    // std::cout << "WIZARD" << std::endl;
+    // plotAsciiHeatmap(PC_hit_rate[3]);
+    // std::cout << std::endl;
 
     std::cout << "Done testing dndSim for " << n << " points per character and level." << std::endl;
     std::cout << "Time taken: " << ms_double.count() << " ms" << std::endl;

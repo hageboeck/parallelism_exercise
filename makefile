@@ -1,5 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -fsanitize=address -g -O0
+#CXXFLAGS = -std=c++17 -Wall -Wextra -fsanitize=address -g -O0
+CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0
 
 # Object files
 OBJ = dndSim.o testSuite.o

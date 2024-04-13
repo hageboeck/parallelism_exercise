@@ -167,7 +167,7 @@ barbarian::barbarian(int lvlCR, std::vector<unsigned short int> stats) : charact
     setAtkBonus();
 }
 void barbarian::setAC(unsigned short int baseAc, bool includeDex) {
-    this->ac = baseAc + ((stats[1] / 2) - 5) + ((stats[2] / 2) - 5);
+    this->ac = baseAc + (unsigned short)(includeDex)*((stats[1] / 2) - 5) + ((stats[2] / 2) - 5);
 }
 bool barbarian::attack(character& enemy) {
     if (this->lvlCR == 1) {
@@ -224,7 +224,7 @@ bool cleric::attack(std::shared_ptr<character> enemy) {
     return attack(*enemy);
 }
 void cleric::setAC(unsigned short int baseAc, bool includeDex) {
-    this->ac = baseAc + std::min(((stats[1] / 2) - 5), 2 + int(mediumArmorMaster));
+    this->ac = baseAc + (unsigned short)(includeDex)*std::min(((stats[1] / 2) - 5), 2 + int(mediumArmorMaster));
 }
 
 void rogue::initializeLvlStats() {
