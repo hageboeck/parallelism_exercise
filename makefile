@@ -1,9 +1,9 @@
 CXX = g++
-#CXXFLAGS = -std=c++17 -Wall -Wextra -fsanitize=address -g -O0
-CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0
+CXXFLAGS = -std=c++17 -g -O0
 
 # Object files
-OBJ = dndSim.o testSuite.o
+ALLOBJ = rng.o dndSim.o testSuite.o
+OBJ = $(filter-out dndSim.o, $(ALLOBJ))
 
 # Executable name
 EXEC = testSuite
@@ -12,8 +12,12 @@ EXEC = testSuite
 all: $(EXEC)
 
 # Link the test suite executable
-$(EXEC): dndSim.o testSuite.o
-	$(CXX) $(CXXFLAGS) -o $(EXEC) testSuite.o dndSim.o
+$(EXEC): rng.o dndSim.o testSuite.o
+	$(CXX) $(CXXFLAGS) -o $(EXEC) testSuite.o dndSim.o rng.o
+
+# Compile the rng library
+rng.o: rng.cpp
+	$(CXX) $(CXXFLAGS) -c rng.cpp
 
 # Compile the dndSim library
 dndSim.o: dndSim.cpp
@@ -27,3 +31,9 @@ testSuite.o: testSuite.cpp
 clean:
 	rm -f $(OBJ) $(EXEC)
 
+cleanall:
+	rm -f $(ALLOBJ) $(EXEC)
+
+# Parallel build target
+parallel: CXXFLAGS += -fopenmp
+parallel: $(EXEC)

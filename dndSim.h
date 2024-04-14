@@ -20,20 +20,15 @@
 
 #include <string>
 #include <map>
-#include <vector>
-#include <random>
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <iostream>
+#include "rng.h"
 
 namespace dndSim{
 
     const std::map<std::string,unsigned short int> statNames = {{"str",0}, {"dex",1}, {"con",2}, {"int",3}, {"wis",4}, {"cha",5}};
-
-    unsigned short int roll1d20();
-    unsigned short int roll2d20dl();
-    unsigned short int roll2d20dh();
 
     class character;
     class barbarian;
@@ -68,10 +63,17 @@ namespace dndSim{
         unsigned short int getProfBonus();
         unsigned short int getAC();
         virtual bool attack(character& enemy);
+        bool attack(barbarian& enemy);
+        bool attack(cleric& enemy);
+        bool attack(rogue& enemy);
+        bool attack(wizard& enemy);
         virtual bool attack(std::shared_ptr<character> enemy);
+        bool attack(std::shared_ptr<barbarian> enemy);
+        bool attack(std::shared_ptr<cleric> enemy);
+        bool attack(std::shared_ptr<rogue> enemy);
+        bool attack(std::shared_ptr<wizard> enemy);
         virtual bool save(unsigned short int saveStat, unsigned short int saveDC);
     };
-
 
     class barbarian : public character {
         std::vector<std::vector<unsigned short int>> lvlStats;
@@ -82,6 +84,7 @@ namespace dndSim{
         barbarian(int lvlCR, std::vector<unsigned short int> stats = {16,14,14,8,12,10});
         bool attack(character& enemy) override;
         bool attack(std::shared_ptr<character> enemy) override;
+        bool save(unsigned short int saveStat, unsigned short int saveDC) override;
     protected:
         void setAC(unsigned short int baseAc = 10, bool includeDex = true) override;
     private:
@@ -97,6 +100,7 @@ namespace dndSim{
         cleric(int lvlCR, std::vector<unsigned short int> stats = {10,14,12,8,16,14});
         bool attack( character& enemy ) override;
         bool attack( std::shared_ptr<character> enemy );
+        bool save(unsigned short int saveStat, unsigned short int saveDC) override;
     protected:
         void setAC(unsigned short int baseAc = 13, bool includeDex = true) override;
     private:
@@ -111,6 +115,7 @@ namespace dndSim{
         rogue(int lvlCR, std::vector<unsigned short int> stats = {8,16,12,14,14,10});
         bool attack( character& enemy ) override;
         bool attack( std::shared_ptr<character> enemy );
+        bool save(unsigned short int saveStat, unsigned short int saveDC) override;
     private:
         void initializeLvlStats(); 
     };
@@ -123,10 +128,15 @@ namespace dndSim{
         wizard(int lvlCR, std::vector<unsigned short int> stats = {8,14,10,16,14,12});
         bool attack( character& enemy ) override;
         bool attack( std::shared_ptr<character> enemy );
+        bool save(unsigned short int saveStat, unsigned short int saveDC) override;
     private:
         void initializeLvlStats(); 
     };
 
+    bool attack_barbarian( unsigned short int lvl, std::shared_ptr<npc> npc );
+    bool attack_cleric( unsigned short int lvl, std::shared_ptr<npc> npc );
+    bool attack_rogue( unsigned short int lvl, std::shared_ptr<npc> npc );
+    bool attack_wizard( unsigned short int lvl, std::shared_ptr<npc> npc );
 
     std::shared_ptr<npc> random_encounter( int lvlCR, std::string type = "any" );
 

@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # List of CSV file names
-files = ['barbarian_hit_rate.csv', 'cleric_hit_rate.csv', 'rogue_hit_rate.csv', 'wizard_hit_rate.csv']
+files = ['barbarian_NPC_hit_rate.csv', 'cleric_NPC_hit_rate.csv', 'rogue_NPC_hit_rate.csv', 'wizard_NPC_hit_rate.csv', 'NPC_barbarian_hit_rate.csv', 'NPC_cleric_hit_rate.csv', 'NPC_rogue_hit_rate.csv', 'NPC_wizard_hit_rate.csv']
 
 # Process each file
 for file_name in files:
@@ -18,7 +18,7 @@ for file_name in files:
     ax = sns.heatmap(data, annot=False, cmap='coolwarm', cbar_kws={'label': 'Hit Rate'})
     
     # Title and labels
-    plt.title(f'{file_name.split("_")[0].capitalize()} hit rate against NPCs')
+    plt.title(f'{file_name.split("_")[0].capitalize()} hit rate against {file_name.split("_")[1]}s')
     plt.ylabel('NPC level')
     plt.xlabel('PC level')
 
@@ -30,7 +30,7 @@ for file_name in files:
     plt.gca().invert_yaxis()
     
     # Save the plot as a PNG file
-    plt.savefig(f'{file_name.split("_")[0]}_attack_hit_rate.png')
+    plt.savefig(f'{file_name.split("_")[0]}_{file_name.split("_")[1]}_hit_rate.png')
     
     # Close the plot figure to free up memory
     plt.close()

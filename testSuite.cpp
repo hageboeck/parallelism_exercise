@@ -95,40 +95,78 @@ int main(int argc, char* argv[]){
         return dndSim::wizard_premade[lvl].attack(npc);
     };
 
+    // Define the types of attacks against the pre-built characters
+    attack barbarian_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::attack_barbarian(lvl, npc);
+    };
+    attack cleric_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::attack_cleric(lvl, npc);
+    };
+    attack rogue_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::attack_rogue(lvl, npc);
+    };
+    attack wizard_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+        return dndSim::attack_wizard(lvl, npc);
+    };
+
     // Initialize the hit vectors for each character type
     auto barbarian_hits = initializeHitVector(n);
     auto cleric_hits = initializeHitVector(n);
     auto rogue_hits = initializeHitVector(n);
     auto wizard_hits = initializeHitVector(n);
+    auto barbarian_def = initializeHitVector(n);
+    auto cleric_def = initializeHitVector(n);
+    auto rogue_def = initializeHitVector(n);
+    auto wizard_def = initializeHitVector(n);
     // Create a vector of the pre-built characters and their attack functions
     auto pre_builds = std::vector<attack>(4);
     pre_builds[0] = barbarian;
     pre_builds[1] = cleric;
     pre_builds[2] = rogue;
     pre_builds[3] = wizard;
+    // Create a vector of the pre-built characters and their defend functions
+    auto pre_builds_defend = std::vector<attack>(4);
+    pre_builds_defend[0] = barbarian_defend;
+    pre_builds_defend[1] = cleric_defend;
+    pre_builds_defend[2] = rogue_defend;
+    pre_builds_defend[3] = wizard_defend;
     // Create a vector of the hit vectors for each character class
     auto hits = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<bool>>> > >(4);
     hits[0] = barbarian_hits;
     hits[1] = cleric_hits;
     hits[2] = rogue_hits;
     hits[3] = wizard_hits;
+    auto def = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<bool>>> > >(4);
+    def[0] = barbarian_def;
+    def[1] = cleric_def;
+    def[2] = rogue_def;
+    def[3] = wizard_def;
 
     // Run the simulation for each character class and level
     // The actual loop order is pretty irrelevant, so long as we get all the combinations
     // Just don't mess up the indices
     // The outer loop is for the number of battles to simulate
     // Couldn't this be done in parallel?
-    // --- Not with this loop order
+    // --- Not with this loop order, maybe if we moved the n-loop in?
+    // I don't think our random number generator is vectorized, so we'd have to do it manually
+    // ...Have you tried it?
+    // ...No
     for( int k = 0; k < n ; ++k){
         // The next loop is for the enemy levels
+#pragma omp parallel for
         for ( auto lvlNPC : test_levels ){
             // The next loop is for the character classes
             // Maybe we could multithread here?
+            // Well, multithreading here would only use up to four threads
+            // Would it? The inner loop could be split across multiple threads
+            // Do we need to do that manually?
+            // Nah, I'm pretty sure OMP can handle that
             for ( auto l = 0 ; l < 4 ; ++l ){
                 // The innermost loop is for the player character levels
                 for( auto lvlPC : test_levels ){
                     auto npc = dndSim::random_encounter(lvlNPC, "any");
                     hits[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds[l](lvlPC, npc);
+                    def[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds_defend[l](lvlPC, npc);
                 }
             }
         }
@@ -139,7 +177,15 @@ int main(int argc, char* argv[]){
     float cleric_hit_rate[20][20];
     float rogue_hit_rate[20][20];
     float wizard_hit_rate[20][20];
-    std::vector<float(*)[20]> PC_hit_rate = {barbarian_hit_rate, cleric_hit_rate, rogue_hit_rate, wizard_hit_rate};    //float PC_hit_rate[4][20][20];
+    std::vector<float(*)[20]> PC_hit_rate = {barbarian_hit_rate, cleric_hit_rate, rogue_hit_rate, wizard_hit_rate};
+
+    // Initialize the hit rate matrices against each character
+    float barbarian_def_rate[20][20];
+    float cleric_def_rate[20][20];
+    float rogue_def_rate[20][20];
+    float wizard_def_rate[20][20];
+    std::vector<float(*)[20]> NPC_hit_rate = {barbarian_def_rate, cleric_def_rate, rogue_def_rate, wizard_def_rate};
+
 
     // Calculate the hit rates
     // Here, the loop order is PC lvl > NPC lvl > PC class
@@ -149,6 +195,9 @@ int main(int argc, char* argv[]){
                 PC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                     hits[l]->at(lvlNPC-1)[lvlPC-1].begin(), hits[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
                      / static_cast<float>(n);
+                NPC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
+                    def[l]->at(lvlNPC-1)[lvlPC-1].begin(), def[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
+                     / static_cast<float>(n);
             }
         }
     }
@@ -157,14 +206,25 @@ int main(int argc, char* argv[]){
 
     duration<double, std::milli> ms_double = t2 - t1;
 
-    auto filames = std::vector<std::string>{"barbarian_hit_rate.csv", "cleric_hit_rate.csv", "rogue_hit_rate.csv", "wizard_hit_rate.csv"};
+    auto atk_filnames = std::vector<std::string>{"barbarian_NPC_hit_rate.csv", "cleric_NPC_hit_rate.csv", "rogue_NPC_hit_rate.csv", "wizard_NPC_hit_rate.csv"};
+    auto def_filnames = std::vector<std::string>{"NPC_barbarian_hit_rate.csv", "NPC_cleric_hit_rate.csv", "NPC_rogue_hit_rate.csv", "NPC_wizard_hit_rate.csv"};
 
     // Export the hit rates to CSV files for plotting
     for (int l = 0; l < 4; ++l){
-        std::ofstream file(filames[l]);
+        std::ofstream file(atk_filnames[l]);
         for (int i = 0; i < 20; ++i){
             for (int j = 0; j < 20; ++j){
                 file << PC_hit_rate[l][i][j] << ",";
+            }
+            file << std::endl;
+        }
+        file.close();
+    }
+    for (int l = 0; l < 4; ++l){
+        std::ofstream file(def_filnames[l]);
+        for (int i = 0; i < 20; ++i){
+            for (int j = 0; j < 20; ++j){
+                file << NPC_hit_rate[l][i][j] << ",";
             }
             file << std::endl;
         }
@@ -183,5 +243,6 @@ int main(int argc, char* argv[]){
 
     std::cout << "Done testing dndSim for " << n << " points per character and level." << std::endl;
     std::cout << "Time taken: " << ms_double.count() << " ms" << std::endl;
+
     return 0;
 }
