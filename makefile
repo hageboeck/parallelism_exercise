@@ -33,6 +33,8 @@ clean:
 
 cleanall:
 	rm -f $(ALLOBJ) $(EXEC)
+	rm -f *.csv
+	rm -f *.png
 
 # Parallel build target
 parallel: CXXFLAGS += -fopenmp

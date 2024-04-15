@@ -166,6 +166,15 @@ int main(int argc, char* argv[]){
                 for( auto lvlPC : test_levels ){
                     auto npc = dndSim::random_encounter(lvlNPC, "any");
                     hits[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds[l](lvlPC, npc);
+                }
+            }
+        }
+    }
+    for( int k = 0; k < n ; ++k){
+        for ( auto lvlNPC : test_levels ){
+            for ( auto l = 0 ; l < 4 ; ++l ){
+                for( auto lvlPC : test_levels ){
+                    auto npc = dndSim::random_encounter(lvlNPC, "any");
                     def[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds_defend[l](lvlPC, npc);
                 }
             }
@@ -195,6 +204,12 @@ int main(int argc, char* argv[]){
                 PC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                     hits[l]->at(lvlNPC-1)[lvlPC-1].begin(), hits[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
                      / static_cast<float>(n);
+            }
+        }
+    }
+    for (auto lvlPC : test_levels){
+        for(auto lvlNPC : test_levels){
+            for (int l = 0; l < 4; ++l){
                 NPC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
                     def[l]->at(lvlNPC-1)[lvlPC-1].begin(), def[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
                      / static_cast<float>(n);
