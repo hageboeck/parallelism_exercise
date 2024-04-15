@@ -153,7 +153,6 @@ int main(int argc, char* argv[]){
     // ...No
     for( int k = 0; k < n ; ++k){
         // The next loop is for the enemy levels
-#pragma omp parallel for
         for ( auto lvlNPC : test_levels ){
             // The next loop is for the character classes
             // Maybe we could multithread here?
@@ -161,6 +160,7 @@ int main(int argc, char* argv[]){
             // Would it? The inner loop could be split across multiple threads
             // Do we need to do that manually?
             // Nah, I'm pretty sure OMP can handle that
+            // But wait, if it's just unfolding the loop, couldn't we just multithread the entire loop?
             for ( auto l = 0 ; l < 4 ; ++l ){
                 // The innermost loop is for the player character levels
                 for( auto lvlPC : test_levels ){
