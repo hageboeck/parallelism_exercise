@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -g -O0
+CXXFLAGS = -std=c++20 -g -O2 -Wall
 
 # Object files
 ALLOBJ = rng.o dndSim.o testSuite.o
@@ -16,11 +16,11 @@ $(EXEC): rng.o dndSim.o testSuite.o
 	$(CXX) $(CXXFLAGS) -o $(EXEC) testSuite.o dndSim.o rng.o
 
 # Compile the rng library
-rng.o: rng.cpp
+rng.o: rng.cpp rng.h
 	$(CXX) $(CXXFLAGS) -c rng.cpp
 
 # Compile the dndSim library
-dndSim.o: dndSim.cpp
+dndSim.o: dndSim.cpp dndSim.h
 	$(CXX) $(CXXFLAGS) -c dndSim.cpp
 
 # Compile the test suite
