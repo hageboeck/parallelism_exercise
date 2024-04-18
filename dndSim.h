@@ -142,11 +142,10 @@ namespace dndSim{
     enum class EncType { any, spellcaster, regular, unknown };
     npc const& random_encounter( int lvlCR, EncType type );
 
-    extern std::map<unsigned short int, barbarian> barbarian_premade;
-    extern std::map<unsigned short int, cleric> cleric_premade;
-    extern std::map<unsigned short int, rogue> rogue_premade;
-    extern std::map<unsigned short int, wizard> wizard_premade;
-
+    extern std::vector<barbarian> barbarian_premade;
+    extern std::vector<cleric> cleric_premade;
+    extern std::vector<rogue> rogue_premade;
+    extern std::vector<wizard> wizard_premade;
 }
 
 #endif // DND_SIM_H

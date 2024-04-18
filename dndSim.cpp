@@ -357,37 +357,23 @@ bool wizard::save(unsigned short int saveStat, unsigned short int saveDC) const 
     return (RNG::wiz_roll1d20() + saves[saveStat] >= saveDC);
 }
 
-    std::map<unsigned short int, barbarian> barbarian_premade = {
-        {1, barbarian(1)}, {2, barbarian(2)}, {3, barbarian(3)}, {4, barbarian(4)},
-        {5, barbarian(5)}, {6, barbarian(6)}, {7, barbarian(7)}, {8, barbarian(8)},
-        {9, barbarian(9)}, {10, barbarian(10)}, {11, barbarian(11)}, {12, barbarian(12)},
-        {13, barbarian(13)}, {14, barbarian(14)}, {15, barbarian(15)}, {16, barbarian(16)},
-        {17, barbarian(17)}, {18, barbarian(18)}, {19, barbarian(19)}, {20, barbarian(20)}
-    };
+std::vector<barbarian> barbarian_premade(21);
+std::vector<cleric> cleric_premade(21);
+std::vector<rogue> rogue_premade(21);
+std::vector<wizard> wizard_premade(21);
 
-    std::map<unsigned short int, cleric> cleric_premade = {
-        {1, cleric(1)}, {2, cleric(2)}, {3, cleric(3)}, {4, cleric(4)},
-        {5, cleric(5)}, {6, cleric(6)}, {7, cleric(7)}, {8, cleric(8)},
-        {9, cleric(9)}, {10, cleric(10)}, {11, cleric(11)}, {12, cleric(12)},
-        {13, cleric(13)}, {14, cleric(14)}, {15, cleric(15)}, {16, cleric(16)},
-        {17, cleric(17)}, {18, cleric(18)}, {19, cleric(19)}, {20, cleric(20)}
-    };
-
-    std::map<unsigned short int, rogue> rogue_premade = {
-        {1, rogue(1)}, {2, rogue(2)}, {3, rogue(3)}, {4, rogue(4)},
-        {5, rogue(5)}, {6, rogue(6)}, {7, rogue(7)}, {8, rogue(8)},
-        {9, rogue(9)}, {10, rogue(10)}, {11, rogue(11)}, {12, rogue(12)},
-        {13, rogue(13)}, {14, rogue(14)}, {15, rogue(15)}, {16, rogue(16)},
-        {17, rogue(17)}, {18, rogue(18)}, {19, rogue(19)}, {20, rogue(20)}
-    };
-
-    std::map<unsigned short int, wizard> wizard_premade = {
-        {1, wizard(1)}, {2, wizard(2)}, {3, wizard(3)}, {4, wizard(4)},
-        {5, wizard(5)}, {6, wizard(6)}, {7, wizard(7)}, {8, wizard(8)},
-        {9, wizard(9)}, {10, wizard(10)}, {11, wizard(11)}, {12, wizard(12)},
-        {13, wizard(13)}, {14, wizard(14)}, {15, wizard(15)}, {16, wizard(16)},
-        {17, wizard(17)}, {18, wizard(18)}, {19, wizard(19)}, {20, wizard(20)}
-    };
+struct StaticInit {
+    StaticInit()
+    {
+        for (int i = 0; i < barbarian_premade.size(); ++i) {
+            barbarian_premade[i] = barbarian(i);
+            cleric_premade[i] = cleric(i);
+            rogue_premade[i] = rogue(i);
+            wizard_premade[i] = wizard(i);
+        }
+    }
+};
+static StaticInit staticInit;
 
     bool attack_barbarian( unsigned short int lvl, dndSim::npc const & npc ){
         return npc.attack(barbarian_premade[lvl]);
