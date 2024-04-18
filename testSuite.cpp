@@ -21,6 +21,9 @@
 #include <functional>
 #include <fstream>
 
+#include <atomic>
+#include <thread>
+
 void usage(){
     std::cout << "Welcome to the TAD&DSIM test suite!" << std::endl;
     std::cout << "This program tests the balance of our random encounters." << std::endl;
@@ -29,11 +32,8 @@ void usage(){
     std::cout << "Have fun!" << std::endl;
 }
 
-const std::vector<unsigned short int> test_levels = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
-
-std::shared_ptr<std::vector<std::vector<std::vector<bool>>>> initializeHitVector(int n) {
-    const int dim1 = test_levels.size();
-    const int dim2 = test_levels.size();
+std::shared_ptr<std::vector<std::vector<std::vector<bool>>>> initializeHitVector(int n, int dim1, int dim2)
+{
     auto hitVector = std::make_shared<std::vector<std::vector<std::vector<bool>>>>(dim1, std::vector<std::vector<bool>>(dim2, std::vector<bool>(n, false)));
     return hitVector;
 }
@@ -71,11 +71,13 @@ int main(int argc, char* argv[]){
         usage();
         return 1;
     }
-    
+
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
+
+    const std::vector<unsigned short int> test_levels = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 
     std::cout << "Testing dndSim..." << std::endl;
 
@@ -110,14 +112,14 @@ int main(int argc, char* argv[]){
     };
 
     // Initialize the hit vectors for each character type
-    auto barbarian_hits = initializeHitVector(n);
-    auto cleric_hits = initializeHitVector(n);
-    auto rogue_hits = initializeHitVector(n);
-    auto wizard_hits = initializeHitVector(n);
-    auto barbarian_def = initializeHitVector(n);
-    auto cleric_def = initializeHitVector(n);
-    auto rogue_def = initializeHitVector(n);
-    auto wizard_def = initializeHitVector(n);
+    auto barbarian_hits = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto cleric_hits = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto rogue_hits = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto wizard_hits = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto barbarian_def = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto cleric_def = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto rogue_def = initializeHitVector(n, test_levels.size(), test_levels.size());
+    auto wizard_def = initializeHitVector(n, test_levels.size(), test_levels.size());
     // Create a vector of the pre-built characters and their attack functions
     auto pre_builds = std::vector<attack>(4);
     pre_builds[0] = barbarian;
@@ -151,35 +153,34 @@ int main(int argc, char* argv[]){
     // I don't think our random number generator is vectorized, so we'd have to do it manually
     // ...Have you tried it?
     // ...No
-    for( int k = 0; k < n ; ++k){
-        // The next loop is for the enemy levels
-        for ( auto lvlNPC : test_levels ){
-            // The next loop is for the character classes
-            // Maybe we could multithread here?
-            // Well, multithreading here would only use up to four threads
-            // Would it? The inner loop could be split across multiple threads
-            // Do we need to do that manually?
-            // Nah, I'm pretty sure OMP can handle that
-            // But wait, if it's just unfolding the loop, couldn't we just multithread the entire loop?
-            for ( auto l = 0 ; l < 4 ; ++l ){
-                // The innermost loop is for the player character levels
-                for( auto lvlPC : test_levels ){
+    // The next loop is for the enemy levels
+    auto testNPCLevel = [&](auto lvlNPC) {
+        // The next loop is for the character classes
+        // Maybe we could multithread here?
+        // Well, multithreading here would only use up to four threads
+        // Would it? The inner loop could be split across multiple threads
+        // Do we need to do that manually?
+        // Nah, I'm pretty sure OMP can handle that
+        // But wait, if it's just unfolding the loop, couldn't we just multithread the entire loop?
+        for (unsigned int l = 0; l < 4; ++l) {
+            // The innermost loop is for the player character levels
+            for (auto lvlPC : test_levels) {
+                for (int k = 0; k < n; ++k) {
                     auto const & npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any);
-                    hits[l]->at(lvlNPC - 1)[lvlPC - 1][k] = pre_builds[l](lvlPC, npc);
+                    (*hits[l])[lvlNPC - 1][lvlPC - 1][k] = pre_builds[l](lvlPC, npc);
+                    (*def[l])[lvlNPC - 1][lvlPC - 1][k] = pre_builds_defend[l](lvlPC, npc);
                 }
             }
         }
+    };
+
+    std::vector<std::thread> threads;
+    for (auto NPCLevel : test_levels) {
+        threads.emplace_back(testNPCLevel, NPCLevel);
     }
-    for( int k = 0; k < n ; ++k){
-        for ( auto lvlNPC : test_levels ){
-            for ( auto l = 0 ; l < 4 ; ++l ){
-                for( auto lvlPC : test_levels ){
-                    auto const & npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any);
-                    def[l]->at(lvlNPC - 1)[lvlPC - 1][k] = pre_builds_defend[l](lvlPC, npc);
-                }
-            }
-        }
-    }
+
+    for (auto& thread : threads)
+        thread.join();
 
     // Initialise the actual hit rate matrices
     float barbarian_hit_rate[20][20];
