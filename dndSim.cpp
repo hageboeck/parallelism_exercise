@@ -5,7 +5,7 @@
 //    | ||  _  | | | / _ \/\ | | | `--. \ | | | |\/| |
 //    | || | | | |/ / (_>  < |/ / /\__/ /_| |_| |  | |
 //    \_/\_| |_/___/ \___/\/___/  \____/ \___/\_|  |_/
-//                                                    
+//
 //==============================================================================
 // TOTALLY ACCURATE D&D SIMULATOR
 // A library for simulating D&D combat totally accurately.
@@ -29,7 +29,7 @@ void character::setStats(std::vector<unsigned short int> statVec = {10,10,10,10,
 void character::setSaves(std::vector<unsigned short int> saveNames) {
     this->saves = {0,0,0,0,0,0};
     for( unsigned short int k = 0 ; k < 6 ; ++k ){
-        this->saves[k] = ( stats[k] / 2 ) - 5; 
+        this->saves[k] = ( stats[k] / 2 ) - 5;
     }
     for( auto saveName : saveNames ){
         this->saves[saveName] += profBonus;
