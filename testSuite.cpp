@@ -71,6 +71,10 @@ int main(int argc, char* argv[]){
         usage();
         return 1;
     }
+    unsigned int nThread = 12;
+    if (argc >= 3) {
+        nThread = std::stoi(argv[2]);
+    }
 
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
@@ -174,11 +178,19 @@ int main(int argc, char* argv[]){
         }
     };
 
-    std::vector<std::thread> threads;
-    for (auto NPCLevel : test_levels) {
-        threads.emplace_back(testNPCLevel, NPCLevel);
-    }
+    std::atomic_uint32_t taskCounter { 0 };
+    auto runTasks = [&]() {
+        unsigned int currentTask = 0;
+        while ((currentTask = taskCounter.fetch_add(1)) < test_levels.size()) {
+            const auto NPCLevel = test_levels[currentTask];
+            testNPCLevel(NPCLevel);
+        }
+    };
 
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0; i < nThread; ++i) {
+        threads.emplace_back(runTasks);
+    }
     for (auto& thread : threads)
         thread.join();
 
