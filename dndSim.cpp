@@ -71,27 +71,31 @@ character::character(unsigned short int lvlCR, std::vector<unsigned short int> i
     setSaveDC();
 }
 
-unsigned short int character::getLvl() {
+unsigned short int character::getLvl() const
+{
     return this->lvlCR;
 }
 
-std::vector<unsigned short int> character::getStats() {
+std::vector<unsigned short int> character::getStats() const
+{
     return this->stats;
 }
 
-std::vector<unsigned short int> character::getSaves() {
+std::vector<unsigned short int> character::getSaves() const
+{
     return this->saves;
 }
 
-unsigned short int character::getProfBonus() {
+unsigned short int character::getProfBonus() const
+{
     return this->profBonus;
 }
 
-unsigned short int character::getAC() {
+unsigned short int character::getAC() const {
     return this->ac;
 }
 
-bool character::attack(character& enemy) {
+bool character::attack(character const & enemy) const {
     if( this->causeSave ){
         return !(enemy.save( atkStat, saveDC ));
     } else {
@@ -100,12 +104,12 @@ bool character::attack(character& enemy) {
     return false;
 }
 
-bool character::attack(std::shared_ptr<character> enemy) {
+bool character::attack(std::shared_ptr<character> enemy) const {
     if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
 
-bool character::attack(barbarian& enemy) {
+bool character::attack(barbarian const & enemy) {
     if( this->causeSave ){
         return !(enemy.save( atkStat, saveDC ));
     } else {
@@ -117,7 +121,7 @@ bool character::attack(barbarian& enemy) {
     return false;
 }
 
-bool character::attack(cleric& enemy) {
+bool character::attack(cleric const & enemy) {
     if( this->causeSave ){
         return !(enemy.save( atkStat, saveDC ));
     } else {
@@ -126,7 +130,7 @@ bool character::attack(cleric& enemy) {
     return false;
 }
 
-bool character::attack(rogue& enemy) {
+bool character::attack(rogue const & enemy) {
     if( this->causeSave ){
         return !(enemy.save( atkStat, saveDC ));
     } else {
@@ -135,7 +139,7 @@ bool character::attack(rogue& enemy) {
     return false;
 }
 
-bool character::attack(wizard& enemy) {
+bool character::attack(wizard const & enemy) {
     if( this->causeSave ){
         return !(enemy.save( atkStat, saveDC ));
     } else {
@@ -164,7 +168,8 @@ bool character::attack(std::shared_ptr<wizard> enemy) {
     return attack(*enemy);
 }
 
-bool character::save(unsigned short int saveStat, unsigned short int saveDC) {
+bool character::save(unsigned short int saveStat, unsigned short int saveDC) const
+{
     return (RNG::roll1d20() + saves[saveStat] >= saveDC);
 }
 
@@ -204,18 +209,18 @@ barbarian::barbarian(int lvlCR, std::vector<unsigned short int> stats) : charact
 void barbarian::setAC(unsigned short int baseAc, bool includeDex) {
     this->ac = baseAc + (unsigned short)(includeDex)*((stats[1] / 2) - 5) + ((stats[2] / 2) - 5);
 }
-bool barbarian::attack(character& enemy) {
+bool barbarian::attack(character const & enemy) const {
     if (this->lvlCR == 1) {
         return (RNG::barb_roll1d20() + this->atkBonus + this->profBonus + this->rage >= enemy.getAC());
     } else {
         return (RNG::barb_roll2d20dl() + this->atkBonus + this->profBonus + this->rage >= enemy.getAC());
     }
 }
-bool barbarian::attack(std::shared_ptr<character> enemy) {
+bool barbarian::attack(std::shared_ptr<character> enemy) const {
     if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
-bool barbarian::save(unsigned short int saveStat, unsigned short int saveDC) {
+bool barbarian::save(unsigned short int saveStat, unsigned short int saveDC) const {
     return (RNG::barb_roll1d20() + saves[saveStat] + rage >= saveDC);
 }
 
@@ -254,23 +259,23 @@ cleric::cleric(int lvlCR, std::vector<unsigned short int> stats) : character(lvl
     setSaveDC();
     setAC();
 }
-bool cleric::attack(character& enemy) {
+bool cleric::attack(character const & enemy) const {
     return !(enemy.save(4, saveDC));
 }
-bool cleric::attack(std::shared_ptr<character> enemy) {
+bool cleric::attack(std::shared_ptr<character> enemy) const {
     if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
 void cleric::setAC(unsigned short int baseAc, bool includeDex) {
     this->ac = baseAc + (unsigned short)(includeDex)*std::min(((stats[1] / 2) - 5), 2 + int(mediumArmorMaster));
 }
-bool cleric::save(unsigned short int saveStat, unsigned short int saveDC) {
+bool cleric::save(unsigned short int saveStat, unsigned short int saveDC) const {
     return (RNG::cler_roll1d20() + saves[saveStat] >= saveDC);
 }
 
 void rogue::initializeLvlStats() {
     lvlStats = {
-        {8,16,12,14,14,10}, {8,18,12,14,14,10}, {8,20,12,14,14,10}, 
+        {8,16,12,14,14,10}, {8,18,12,14,14,10}, {8,20,12,14,14,10},
         {8,20,12,14,14,10}, {8,20,12,14,14,10}, {8,20,12,14,14,10}, {8,20,12,14,14,10}
     };
 }
@@ -297,14 +302,14 @@ rogue::rogue(int lvlCR, std::vector<unsigned short int> stats) : character(lvlCR
     setSaves({1,3});
     if(lvlCR > 14) setSaves({1,3,4});
 }
-bool rogue::attack(character& enemy) {
+bool rogue::attack(character const & enemy) const {
     return (RNG::rog_roll1d20() + atkBonus + profBonus >= enemy.getAC());
 }
-bool rogue::attack(std::shared_ptr<character> enemy) {
+bool rogue::attack(std::shared_ptr<character> enemy) const {
     if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
-bool rogue::save(unsigned short int saveStat, unsigned short int saveDC) {
+bool rogue::save(unsigned short int saveStat, unsigned short int saveDC) const {
     return (RNG::rog_roll1d20() + saves[saveStat] >= saveDC);
 }
 
@@ -341,14 +346,14 @@ wizard::wizard(int lvlCR, std::vector<unsigned short int> stats) : character(lvl
     setSaveDC();
     setAC(10 + 3 * unsigned(lvlCR > 1));
 }
-bool wizard::attack(character& enemy) {
+bool wizard::attack(character const & enemy) const {
     return (RNG::wiz_roll1d20() + atkBonus + profBonus >= enemy.getAC());
 }
-bool wizard::attack(std::shared_ptr<character> enemy) {
+bool wizard::attack(std::shared_ptr<character> enemy) const {
     if (!enemy) throw std::invalid_argument("Enemy is a nullptr.");
     return attack(*enemy);
 }
-bool wizard::save(unsigned short int saveStat, unsigned short int saveDC) {
+bool wizard::save(unsigned short int saveStat, unsigned short int saveDC) const {
     return (RNG::wiz_roll1d20() + saves[saveStat] >= saveDC);
 }
 
@@ -384,48 +389,51 @@ bool wizard::save(unsigned short int saveStat, unsigned short int saveDC) {
         {17, wizard(17)}, {18, wizard(18)}, {19, wizard(19)}, {20, wizard(20)}
     };
 
-    bool attack_barbarian( unsigned short int lvl, std::shared_ptr<dndSim::npc> npc ){
-        return npc->attack(barbarian_premade[lvl]);
+    bool attack_barbarian( unsigned short int lvl, dndSim::npc const & npc ){
+        return npc.attack(barbarian_premade[lvl]);
     }
 
-    bool attack_cleric( unsigned short int lvl, std::shared_ptr<dndSim::npc> npc ){
-        return npc->attack(cleric_premade[lvl]);
+    bool attack_cleric(unsigned short int lvl, dndSim::npc const& npc)
+    {
+        return npc.attack(cleric_premade[lvl]);
     }
 
-    bool attack_rogue( unsigned short int lvl, std::shared_ptr<dndSim::npc> npc ){
-        return npc->attack(rogue_premade[lvl]);
+    bool attack_rogue(unsigned short int lvl, dndSim::npc const& npc)
+    {
+        return npc.attack(rogue_premade[lvl]);
     }
 
-    bool attack_wizard( unsigned short int lvl, std::shared_ptr<dndSim::npc> npc ){
-        return npc->attack(wizard_premade[lvl]);
+    bool attack_wizard(unsigned short int lvl, dndSim::npc const& npc)
+    {
+        return npc.attack(wizard_premade[lvl]);
     }
 
     extern std::vector<std::vector<std::shared_ptr<dndSim::npc>>> monsters;
     extern std::vector<std::vector<std::shared_ptr<dndSim::npc>>> spell_monsters;
     extern std::vector<std::vector<std::shared_ptr<dndSim::npc>>> non_spell_monsters;
 
-    std::shared_ptr<dndSim::npc> random_encounter_any( unsigned short int lvlCR ){
+    dndSim::npc const & random_encounter_any( unsigned short int lvlCR ){
         auto nr = RNG::genRNG(monsters[lvlCR-1].size());
-        return monsters[lvlCR-1][nr];
+        return *monsters[lvlCR-1][nr];
     }
 
-    std::shared_ptr<dndSim::npc> random_encounter_spellcaster( unsigned short int lvlCR ){
+    dndSim::npc const & random_encounter_spellcaster( unsigned short int lvlCR ){
         auto nr = RNG::genRNG(spell_monsters[lvlCR-1].size());
-        return spell_monsters[lvlCR-1][nr];
+        return *spell_monsters[lvlCR-1][nr];
     }
 
-    std::shared_ptr<dndSim::npc> random_encounter_regular( unsigned short int lvlCR ){
+    dndSim::npc const & random_encounter_regular( unsigned short int lvlCR ){
         auto nr = RNG::genRNG(non_spell_monsters[lvlCR-1].size());
-        return non_spell_monsters[lvlCR-1][nr];
+        return *non_spell_monsters[lvlCR-1][nr];
     }
 
-    std::shared_ptr<dndSim::npc> random_encounter( int lvlCR, std::string type ){
+    dndSim::npc const& random_encounter(int lvlCR, std::string type)
+    {
         if (lvlCR < 1 || lvlCR > 20) throw std::invalid_argument("Currently only CRs of integers 1 through 20 are implemented.");
         if (!(type == "any" || type == "spellcaster" || type == "regular" )) throw std::invalid_argument("Enemy type must be 'any', 'spellcaster', or 'regular'.");
         if (type == "any") return random_encounter_any(lvlCR);
         if (type == "spellcaster") return random_encounter_spellcaster(lvlCR);
-        if (type == "regular") return random_encounter_regular(lvlCR);
-        return nullptr;
+        if (type == "regular")
+            return random_encounter_regular(lvlCR);
     }
-
 }

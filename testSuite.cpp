@@ -58,7 +58,7 @@ void plotAsciiHeatmap(float data[20][20]) {
     std::cout << std::endl;
 }
 // Simplify some of the main by adding an alias for the attack function
-using attack = std::function<bool(unsigned short int,std::shared_ptr<dndSim::npc>)>;
+using attack = std::function<bool(unsigned short int, dndSim::npc const &)>;
 
 int main(int argc, char* argv[]){
     if (argc < 2){
@@ -82,30 +82,30 @@ int main(int argc, char* argv[]){
     auto t1 = high_resolution_clock::now();
 
     // Define the types of attacks of the pre-built characters
-    attack barbarian = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack barbarian = [](unsigned short int lvl, dndSim::npc const & npc){
         return dndSim::barbarian_premade[lvl].attack(npc);
     };
-    attack cleric = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack cleric = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::cleric_premade[lvl].attack(npc);
     };
-    attack rogue = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack rogue = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::rogue_premade[lvl].attack(npc);
     };
-    attack wizard = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack wizard = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::wizard_premade[lvl].attack(npc);
     };
 
     // Define the types of attacks against the pre-built characters
-    attack barbarian_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack barbarian_defend = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::attack_barbarian(lvl, npc);
     };
-    attack cleric_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack cleric_defend = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::attack_cleric(lvl, npc);
     };
-    attack rogue_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack rogue_defend = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::attack_rogue(lvl, npc);
     };
-    attack wizard_defend = [](unsigned short int lvl, std::shared_ptr<dndSim::npc> npc){
+    attack wizard_defend = [](unsigned short int lvl, dndSim::npc const& npc) {
         return dndSim::attack_wizard(lvl, npc);
     };
 
@@ -164,8 +164,8 @@ int main(int argc, char* argv[]){
             for ( auto l = 0 ; l < 4 ; ++l ){
                 // The innermost loop is for the player character levels
                 for( auto lvlPC : test_levels ){
-                    auto npc = dndSim::random_encounter(lvlNPC, "any");
-                    hits[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds[l](lvlPC, npc);
+                    auto& npc = dndSim::random_encounter(lvlNPC, "any");
+                    hits[l]->at(lvlNPC - 1)[lvlPC - 1][k] = pre_builds[l](lvlPC, npc);
                 }
             }
         }
@@ -174,8 +174,8 @@ int main(int argc, char* argv[]){
         for ( auto lvlNPC : test_levels ){
             for ( auto l = 0 ; l < 4 ; ++l ){
                 for( auto lvlPC : test_levels ){
-                    auto npc = dndSim::random_encounter(lvlNPC, "any");
-                    def[l]->at(lvlNPC-1)[lvlPC-1][k] = pre_builds_defend[l](lvlPC, npc);
+                    auto& npc = dndSim::random_encounter(lvlNPC, "any");
+                    def[l]->at(lvlNPC - 1)[lvlPC - 1][k] = pre_builds_defend[l](lvlPC, npc);
                 }
             }
         }
