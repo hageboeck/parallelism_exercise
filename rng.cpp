@@ -21,37 +21,37 @@ namespace RNG
 {
 
     unsigned int genRNG( unsigned int size ){
-        static std::mt19937 generator;
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(0,size-1);
         return distribution(generator);
     }
 
     unsigned short int roll1d20(){
-        static std::mt19937 generator;
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(1,20);
         return distribution(generator);
     }
 
     unsigned short int barb_roll1d20(){
-        static std::mt19937 generator;
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(1,20);
         return distribution(generator);
     }
 
     unsigned short int cler_roll1d20(){
-        static std::mt19937 generator;
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(1,20);
         return distribution(generator);
     }
 
     unsigned short int rog_roll1d20(){
-        static std::mt19937 generator;
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(1,20);
         return distribution(generator);
     }
 
     unsigned short int wiz_roll1d20(){
-        static std::mt19937 generator;
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(1,20);
         return distribution(generator);
     }
