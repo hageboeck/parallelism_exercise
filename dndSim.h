@@ -139,7 +139,8 @@ namespace dndSim{
     bool attack_rogue(unsigned short int lvl, dndSim::npc const& npc);
     bool attack_wizard(unsigned short int lvl, dndSim::npc const& npc);
 
-    npc const& random_encounter(int lvlCR, std::string type = "any");
+    enum class EncType { any, spellcaster, regular, unknown };
+    npc const& random_encounter( int lvlCR, EncType type );
 
     extern std::map<unsigned short int, barbarian> barbarian_premade;
     extern std::map<unsigned short int, cleric> cleric_premade;

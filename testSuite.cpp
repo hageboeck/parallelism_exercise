@@ -164,7 +164,7 @@ int main(int argc, char* argv[]){
             for ( auto l = 0 ; l < 4 ; ++l ){
                 // The innermost loop is for the player character levels
                 for( auto lvlPC : test_levels ){
-                    auto& npc = dndSim::random_encounter(lvlNPC, "any");
+                    auto const & npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any);
                     hits[l]->at(lvlNPC - 1)[lvlPC - 1][k] = pre_builds[l](lvlPC, npc);
                 }
             }
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]){
         for ( auto lvlNPC : test_levels ){
             for ( auto l = 0 ; l < 4 ; ++l ){
                 for( auto lvlPC : test_levels ){
-                    auto& npc = dndSim::random_encounter(lvlNPC, "any");
+                    auto const & npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any);
                     def[l]->at(lvlNPC - 1)[lvlPC - 1][k] = pre_builds_defend[l](lvlPC, npc);
                 }
             }

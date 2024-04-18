@@ -427,13 +427,13 @@ bool wizard::save(unsigned short int saveStat, unsigned short int saveDC) const 
         return *non_spell_monsters[lvlCR-1][nr];
     }
 
-    dndSim::npc const& random_encounter(int lvlCR, std::string type)
+    dndSim::npc const& random_encounter(int lvlCR, EncType type)
     {
         if (lvlCR < 1 || lvlCR > 20) throw std::invalid_argument("Currently only CRs of integers 1 through 20 are implemented.");
-        if (!(type == "any" || type == "spellcaster" || type == "regular" )) throw std::invalid_argument("Enemy type must be 'any', 'spellcaster', or 'regular'.");
-        if (type == "any") return random_encounter_any(lvlCR);
-        if (type == "spellcaster") return random_encounter_spellcaster(lvlCR);
-        if (type == "regular")
-            return random_encounter_regular(lvlCR);
+        if (type == EncType::any) return random_encounter_any(lvlCR);
+        if (type == EncType::spellcaster) return random_encounter_spellcaster(lvlCR);
+        if (type == EncType::regular) return random_encounter_regular(lvlCR);
+
+        throw std::invalid_argument("Enemy type must be 'any', 'spellcaster', or 'regular'.");
     }
 }
