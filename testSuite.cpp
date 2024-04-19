@@ -32,9 +32,9 @@ void usage(){
     std::cout << "Have fun!" << std::endl;
 }
 
-std::shared_ptr<std::vector<std::vector<std::vector<bool>>>> initializeHitVector(int n, int dim1, int dim2)
+std::shared_ptr<std::vector<std::vector<std::vector<unsigned char>>>> initializeHitVector(int n, int dim1, int dim2)
 {
-    auto hitVector = std::make_shared<std::vector<std::vector<std::vector<bool>>>>(dim1, std::vector<std::vector<bool>>(dim2, std::vector<bool>(n, false)));
+    auto hitVector = std::make_shared<std::vector<std::vector<std::vector<unsigned char>>>>(dim1, std::vector<std::vector<unsigned char>>(dim2, std::vector<unsigned char>(n, false)));
     return hitVector;
 }
 
@@ -137,12 +137,12 @@ int main(int argc, char* argv[]){
     pre_builds_defend[2] = rogue_defend;
     pre_builds_defend[3] = wizard_defend;
     // Create a vector of the hit vectors for each character class
-    auto hits = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<bool>>> > >(4);
+    auto hits = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<unsigned char>>>>>(4);
     hits[0] = barbarian_hits;
     hits[1] = cleric_hits;
     hits[2] = rogue_hits;
     hits[3] = wizard_hits;
-    auto def = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<bool>>> > >(4);
+    auto def = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<unsigned char>>>>>(4);
     def[0] = barbarian_def;
     def[1] = cleric_def;
     def[2] = rogue_def;
