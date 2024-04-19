@@ -63,17 +63,12 @@ namespace dndSim{
         std::vector<unsigned short int> getSaves() const;
         unsigned short int getProfBonus() const;
         unsigned short int getAC() const;
-        virtual bool attack(character const & enemy) const;
-        bool attack(barbarian const & enemy);
-        bool attack(cleric const & enemy);
-        bool attack(rogue const & enemy);
-        bool attack(wizard const & enemy);
-        virtual bool attack(std::shared_ptr<character> enemy) const;
-        bool attack(std::shared_ptr<barbarian> enemy);
-        bool attack(std::shared_ptr<cleric> enemy);
-        bool attack(std::shared_ptr<rogue> enemy);
-        bool attack(std::shared_ptr<wizard> enemy);
-        virtual bool save(unsigned short int saveStat, unsigned short int saveDC) const;
+        virtual bool attack(character const& enemy, RNG::RNG_t& rng) const;
+        bool attack(barbarian const& enemy, RNG::RNG_t& rng);
+        bool attack(cleric const& enemy, RNG::RNG_t& rng);
+        bool attack(rogue const& enemy, RNG::RNG_t& rng);
+        bool attack(wizard const& enemy, RNG::RNG_t& rng);
+        virtual bool save(unsigned short int saveStat, unsigned short int saveDC, RNG::RNG_t& rng) const;
     };
 
     class barbarian : public character {
@@ -83,9 +78,9 @@ namespace dndSim{
         barbarian();
         barbarian(unsigned short int lvlCR, std::vector<unsigned short int> stats = {16,14,14,8,12,10});
         barbarian(int lvlCR, std::vector<unsigned short int> stats = {16,14,14,8,12,10});
-        bool attack(character const & enemy) const override;
-        bool attack(std::shared_ptr<character> enemy) const override;
-        bool save(unsigned short int saveStat, unsigned short int saveDC) const override;
+        bool attack(character const& enemy, RNG::RNG_t& rng) const override;
+        bool save(unsigned short int saveStat, unsigned short int saveDC, RNG::RNG_t& rng) const override;
+
     protected:
         void setAC(unsigned short int baseAc = 10, bool includeDex = true) override;
     private:
@@ -99,9 +94,9 @@ namespace dndSim{
         cleric();
         cleric(unsigned short int lvlCR, std::vector<unsigned short int> stats = {10,14,12,8,16,14});
         cleric(int lvlCR, std::vector<unsigned short int> stats = {10,14,12,8,16,14});
-        bool attack( character const & enemy ) const override;
-        bool attack( std::shared_ptr<character> enemy ) const override;
-        bool save(unsigned short int saveStat, unsigned short int saveDC) const override;
+        bool attack(character const& enemy, RNG::RNG_t& rng) const override;
+        bool save(unsigned short int saveStat, unsigned short int saveDC, RNG::RNG_t& rng) const override;
+
     protected:
         void setAC(unsigned short int baseAc = 13, bool includeDex = true) override;
     private:
@@ -114,9 +109,9 @@ namespace dndSim{
         rogue();
         rogue(unsigned short int lvlCR, std::vector<unsigned short int> stats = {8,16,12,14,14,10});
         rogue(int lvlCR, std::vector<unsigned short int> stats = {8,16,12,14,14,10});
-        bool attack( character const & enemy ) const override;
-        bool attack( std::shared_ptr<character> enemy ) const override;
-        bool save(unsigned short int saveStat, unsigned short int saveDC) const override;
+        bool attack(character const& enemy, RNG::RNG_t& rng) const override;
+        bool save(unsigned short int saveStat, unsigned short int saveDC, RNG::RNG_t& rng) const override;
+
     private:
         void initializeLvlStats();
     };
@@ -127,20 +122,20 @@ namespace dndSim{
         wizard();
         wizard(unsigned short int lvlCR, std::vector<unsigned short int> stats = {8,14,10,16,14,12});
         wizard(int lvlCR, std::vector<unsigned short int> stats = {8,14,10,16,14,12});
-        bool attack( character const & enemy ) const override;
-        bool attack( std::shared_ptr<character> enemy ) const override;
-        bool save(unsigned short int saveStat, unsigned short int saveDC) const override;
+        bool attack(character const& enemy, RNG::RNG_t& rng) const override;
+        bool save(unsigned short int saveStat, unsigned short int saveDC, RNG::RNG_t& rng) const override;
+
     private:
         void initializeLvlStats();
     };
 
-    bool attack_barbarian(unsigned short int lvl, npc const& npc);
-    bool attack_cleric(unsigned short int lvl, npc const& npc);
-    bool attack_rogue(unsigned short int lvl, dndSim::npc const& npc);
-    bool attack_wizard(unsigned short int lvl, dndSim::npc const& npc);
+    bool attack_barbarian(unsigned short int lvl, npc const& npc, RNG::RNG_t& rng);
+    bool attack_cleric(unsigned short int lvl, npc const& npc, RNG::RNG_t& rng);
+    bool attack_rogue(unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng);
+    bool attack_wizard(unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng);
 
     enum class EncType { any, spellcaster, regular, unknown };
-    npc const& random_encounter( int lvlCR, EncType type );
+    npc const& random_encounter(int lvlCR, EncType type, RNG::RNG_t& rng);
 
     extern std::vector<barbarian> barbarian_premade;
     extern std::vector<cleric> cleric_premade;

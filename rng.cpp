@@ -20,58 +20,60 @@
 namespace RNG
 {
 
-    unsigned int genRNG( unsigned int size ){
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        return distribution(generator);
-    }
+unsigned int genRNG(unsigned int size, RNG_t& rng)
+{
+    std::uniform_int_distribution<int> distribution(0, size - 1);
+    return distribution(rng);
+}
 
-    unsigned short int roll1d20(){
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(1,20);
-        return distribution(generator);
-    }
+unsigned short int roll1d20(RNG_t& rng)
+{
+    std::uniform_int_distribution<int> distribution(1, 20);
+    return distribution(rng);
+}
 
-    unsigned short int barb_roll1d20(){
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(1,20);
-        return distribution(generator);
-    }
+unsigned short int barb_roll1d20(RNG_t& rng)
+{
+    std::uniform_int_distribution<int> distribution(1, 20);
+    return distribution(rng);
+}
 
-    unsigned short int cler_roll1d20(){
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(1,20);
-        return distribution(generator);
-    }
+unsigned short int cler_roll1d20(RNG_t& rng)
+{
+    std::uniform_int_distribution<int> distribution(1, 20);
+    return distribution(rng);
+}
 
-    unsigned short int rog_roll1d20(){
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(1,20);
-        return distribution(generator);
-    }
+unsigned short int rog_roll1d20(RNG_t& rng)
+{
+    std::uniform_int_distribution<int> distribution(1, 20);
+    return distribution(rng);
+}
 
-    unsigned short int wiz_roll1d20(){
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(1,20);
-        return distribution(generator);
-    }
+unsigned short int wiz_roll1d20(RNG_t& rng)
+{
+    std::uniform_int_distribution<int> distribution(1, 20);
+    return distribution(rng);
+}
 
-    unsigned short int roll2d20dl(){
-        unsigned short int roll1 = roll1d20();
-        unsigned short int roll2 = roll1d20();
-        return std::max(roll1,roll2);
-    }
+unsigned short int roll2d20dl(RNG_t& rng)
+{
+    unsigned short int roll1 = roll1d20(rng);
+    unsigned short int roll2 = roll1d20(rng);
+    return std::max(roll1, roll2);
+}
 
-    unsigned short int barb_roll2d20dl(){
-        unsigned short int roll1 = barb_roll1d20();
-        unsigned short int roll2 = barb_roll1d20();
-        return std::max(roll1,roll2);
-    }
+unsigned short int barb_roll2d20dl(RNG_t& rng)
+{
+    unsigned short int roll1 = barb_roll1d20(rng);
+    unsigned short int roll2 = barb_roll1d20(rng);
+    return std::max(roll1, roll2);
+}
 
-    unsigned short int roll2d20dh(){
-        unsigned short int roll1 = roll1d20();
-        unsigned short int roll2 = roll1d20();
-        return std::min(roll1,roll2);
-    }
-
+unsigned short int roll2d20dh(RNG_t& rng)
+{
+    unsigned short int roll1 = roll1d20(rng);
+    unsigned short int roll2 = roll1d20(rng);
+    return std::min(roll1, roll2);
+}
 }

@@ -23,17 +23,16 @@
 
 namespace RNG
 {
-
-    unsigned int genRNG( unsigned int size );
-    unsigned short int roll1d20();
-    unsigned short int barb_roll1d20();
-    unsigned short int cler_roll1d20();
-    unsigned short int rog_roll1d20();
-    unsigned short int wiz_roll1d20();
-    unsigned short int roll2d20dl();
-    unsigned short int barb_roll2d20dl();
-    unsigned short int roll2d20dh();
-
+using RNG_t = std::mt19937;
+unsigned int genRNG(unsigned int size, RNG_t& rng);
+unsigned short int roll1d20(RNG_t& rng);
+unsigned short int barb_roll1d20(RNG_t& rng);
+unsigned short int cler_roll1d20(RNG_t& rng);
+unsigned short int rog_roll1d20(RNG_t& rng);
+unsigned short int wiz_roll1d20(RNG_t& rng);
+unsigned short int roll2d20dl(RNG_t& rng);
+unsigned short int barb_roll2d20dl(RNG_t& rng);
+unsigned short int roll2d20dh(RNG_t& rng);
 }
 
 #endif
