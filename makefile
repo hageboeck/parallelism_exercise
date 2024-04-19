@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++20 -g -O2 -Wall
 
 # Object files
-ALLOBJ = rng.o dndSim.o testSuite.o
+ALLOBJ = rng.o dndSim.o testSuite.o all_monsters.o
 OBJ = $(filter-out dndSim.o, $(ALLOBJ))
 
 # Executable name
@@ -12,8 +12,12 @@ EXEC = testSuite
 all: $(EXEC)
 
 # Link the test suite executable
-$(EXEC): rng.o dndSim.o testSuite.o
-	$(CXX) $(CXXFLAGS) -o $(EXEC) testSuite.o dndSim.o rng.o
+$(EXEC): $(ALLOBJ)
+	$(CXX) $(CXXFLAGS) -o $(EXEC) $(ALLOBJ)
+
+# Compile the rng library
+all_onsters.o: all_monsters.cpp dndSim.h
+	$(CXX) $(CXXFLAGS) -c $<
 
 # Compile the rng library
 rng.o: rng.cpp rng.h

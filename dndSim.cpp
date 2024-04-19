@@ -400,7 +400,9 @@ bool wizard::save(unsigned short int saveStat, unsigned short int saveDC) {
         return npc->attack(wizard_premade[lvl]);
     }
 
-#include "all_monsters.txt"
+    extern std::vector<std::vector<std::shared_ptr<dndSim::npc>>> monsters;
+    extern std::vector<std::vector<std::shared_ptr<dndSim::npc>>> spell_monsters;
+    extern std::vector<std::vector<std::shared_ptr<dndSim::npc>>> non_spell_monsters;
 
     std::shared_ptr<dndSim::npc> random_encounter_any( unsigned short int lvlCR ){
         auto nr = RNG::genRNG(monsters[lvlCR-1].size());
