@@ -68,8 +68,6 @@ void plotAsciiHeatmap(float data[20][20]) {
     }
     std::cout << std::endl;
 }
-// Simplify some of the main by adding an alias for the attack function
-using attack = std::function<bool(unsigned short int, dndSim::npc const&, RNG::RNG_t&)>;
 
 int main(int argc, char* argv[]){
     if (argc < 2){
@@ -98,34 +96,6 @@ int main(int argc, char* argv[]){
 
     auto t1 = high_resolution_clock::now();
 
-    // Define the types of attacks of the pre-built characters
-    attack barbarian = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::barbarian_premade[lvl].attack(npc, rng);
-    };
-    attack cleric = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::cleric_premade[lvl].attack(npc, rng);
-    };
-    attack rogue = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::rogue_premade[lvl].attack(npc, rng);
-    };
-    attack wizard = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::wizard_premade[lvl].attack(npc, rng);
-    };
-
-    // Define the types of attacks against the pre-built characters
-    attack barbarian_defend = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::attack_barbarian(lvl, npc, rng);
-    };
-    attack cleric_defend = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::attack_cleric(lvl, npc, rng);
-    };
-    attack rogue_defend = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::attack_rogue(lvl, npc, rng);
-    };
-    attack wizard_defend = [](unsigned short int lvl, dndSim::npc const& npc, RNG::RNG_t& rng) {
-        return dndSim::attack_wizard(lvl, npc, rng);
-    };
-
     // Initialize the hit vectors for each character type
     auto barbarian_hits = initializeHitVector(n, test_levels.size(), test_levels.size());
     auto cleric_hits = initializeHitVector(n, test_levels.size(), test_levels.size());
@@ -135,18 +105,6 @@ int main(int argc, char* argv[]){
     auto cleric_def = initializeHitVector(n, test_levels.size(), test_levels.size());
     auto rogue_def = initializeHitVector(n, test_levels.size(), test_levels.size());
     auto wizard_def = initializeHitVector(n, test_levels.size(), test_levels.size());
-    // Create a vector of the pre-built characters and their attack functions
-    auto pre_builds = std::vector<attack>(4);
-    pre_builds[0] = barbarian;
-    pre_builds[1] = cleric;
-    pre_builds[2] = rogue;
-    pre_builds[3] = wizard;
-    // Create a vector of the pre-built characters and their defend functions
-    auto pre_builds_defend = std::vector<attack>(4);
-    pre_builds_defend[0] = barbarian_defend;
-    pre_builds_defend[1] = cleric_defend;
-    pre_builds_defend[2] = rogue_defend;
-    pre_builds_defend[3] = wizard_defend;
     // Create a vector of the hit vectors for each character class
     std::vector<mdspan<unsigned char>> hits(4);
     hits[0] = mdspan<unsigned char>{barbarian_hits->data(), {test_levels.size(), test_levels.size(), n}};
@@ -179,14 +137,34 @@ int main(int argc, char* argv[]){
         // Nah, I'm pretty sure OMP can handle that
         // But wait, if it's just unfolding the loop, couldn't we just multithread the entire loop?
         for (unsigned int l = 0; l < 4; ++l) {
-            const auto func_attack = pre_builds[l];
-            const auto func_defend = pre_builds_defend[l];
-            // The innermost loop is for the player character levels
+
+          // The innermost loop is for the player character levels
             for (auto lvlPC : test_levels) {
               for (std::size_t k = 0; k < n; ++k) {
                     auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
-                    hits[l](lvlNPC - 1, lvlPC - 1, k) = func_attack(lvlPC, npc, localRNG);
-                    def[l] (lvlNPC - 1, lvlPC - 1, k) = func_defend(lvlPC, npc, localRNG);
+                    bool attack = false;
+                    bool defend = false;
+                    switch (l) {
+                      case 0:
+                        attack = dndSim::barbarian_premade[lvlPC].attack(npc, localRNG);
+                        defend = dndSim::attack_barbarian(lvlPC, npc, localRNG);
+                        break;
+                      case 1:
+                        attack = dndSim::cleric_premade[lvlPC].attack(npc, localRNG);
+                        defend = dndSim::attack_cleric(lvlPC, npc, localRNG);
+                        break;
+                      case 2:
+                        attack = dndSim::rogue_premade[lvlPC].attack(npc, localRNG);
+                        defend = dndSim::attack_rogue(lvlPC, npc, localRNG);
+                        break;
+                      case 3:
+                        attack = dndSim::wizard_premade[lvlPC].attack(npc, localRNG);
+                        defend = dndSim::attack_wizard(lvlPC, npc, localRNG);
+                        break;
+                    }
+
+                    hits[l](lvlNPC - 1, lvlPC - 1, k) = attack;
+                    def[l] (lvlNPC - 1, lvlPC - 1, k) = defend;
                 }
             }
         }
