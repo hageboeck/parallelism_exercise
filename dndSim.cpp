@@ -341,7 +341,7 @@ std::vector<wizard> wizard_premade(21);
 struct StaticInit {
     StaticInit()
     {
-        for (int i = 0; i < barbarian_premade.size(); ++i) {
+        for (int i = 0; static_cast<unsigned int>(i) < barbarian_premade.size(); ++i) {
             barbarian_premade[i] = barbarian(i);
             cleric_premade[i] = cleric(i);
             rogue_premade[i] = rogue(i);
