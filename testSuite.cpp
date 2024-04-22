@@ -137,8 +137,10 @@ int main(int argc, char* argv[]){
         // Nah, I'm pretty sure OMP can handle that
         // But wait, if it's just unfolding the loop, couldn't we just multithread the entire loop?
         for (unsigned int l = 0; l < 4; ++l) {
+            auto & hitVector = hits[l];
+            auto & defVector = def[l];
 
-          // The innermost loop is for the player character levels
+            // The innermost loop is for the player character levels
             for (auto lvlPC : test_levels) {
               for (std::size_t k = 0; k < n; ++k) {
                     auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
@@ -163,8 +165,8 @@ int main(int argc, char* argv[]){
                         break;
                     }
 
-                    hits[l](lvlNPC - 1, lvlPC - 1, k) = attack;
-                    def[l] (lvlNPC - 1, lvlPC - 1, k) = defend;
+                    hitVector(lvlNPC - 1, lvlPC - 1, k) = attack;
+                    defVector(lvlNPC - 1, lvlPC - 1, k) = defend;
                 }
             }
         }
