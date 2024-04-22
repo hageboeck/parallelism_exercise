@@ -136,39 +136,42 @@ int main(int argc, char* argv[]){
         // Do we need to do that manually?
         // Nah, I'm pretty sure OMP can handle that
         // But wait, if it's just unfolding the loop, couldn't we just multithread the entire loop?
-        for (unsigned int l = 0; l < 4; ++l) {
-            auto & hitVector = hits[l];
-            auto & defVector = def[l];
 
-            // The innermost loop is for the player character levels
-            for (auto lvlPC : test_levels) {
-              for (std::size_t k = 0; k < n; ++k) {
-                    auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
-                    bool attack = false;
-                    bool defend = false;
-                    switch (l) {
-                      case 0:
-                        attack = dndSim::barbarian_premade[lvlPC].attack(npc, localRNG);
-                        defend = dndSim::attack_barbarian(lvlPC, npc, localRNG);
-                        break;
-                      case 1:
-                        attack = dndSim::cleric_premade[lvlPC].attack(npc, localRNG);
-                        defend = dndSim::attack_cleric(lvlPC, npc, localRNG);
-                        break;
-                      case 2:
-                        attack = dndSim::rogue_premade[lvlPC].attack(npc, localRNG);
-                        defend = dndSim::attack_rogue(lvlPC, npc, localRNG);
-                        break;
-                      case 3:
-                        attack = dndSim::wizard_premade[lvlPC].attack(npc, localRNG);
-                        defend = dndSim::attack_wizard(lvlPC, npc, localRNG);
-                        break;
-                    }
-
-                    hitVector(lvlNPC - 1, lvlPC - 1, k) = attack;
-                    defVector(lvlNPC - 1, lvlPC - 1, k) = defend;
-                }
-            }
+        for (auto lvlPC : test_levels) {
+          auto & hitVector = hits[0];
+          auto & defVector = def[0];
+          for (std::size_t k = 0; k < n; ++k) {
+            auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
+            hitVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::barbarian_premade[lvlPC].attack(npc, localRNG);
+            defVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::attack_barbarian(lvlPC, npc, localRNG);
+          }
+        }
+        for (auto lvlPC : test_levels) {
+          auto & hitVector = hits[1];
+          auto & defVector = def[1];
+          for (std::size_t k = 0; k < n; ++k) {
+            auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
+            hitVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::cleric_premade[lvlPC].attack(npc, localRNG);
+            defVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::attack_cleric(lvlPC, npc, localRNG);
+          }
+        }
+        for (auto lvlPC : test_levels) {
+          auto & hitVector = hits[2];
+          auto & defVector = def[2];
+          for (std::size_t k = 0; k < n; ++k) {
+            auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
+            hitVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::rogue_premade[lvlPC].attack(npc, localRNG);
+            defVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::attack_rogue(lvlPC, npc, localRNG);
+          }
+        }
+        for (auto lvlPC : test_levels) {
+          auto & hitVector = hits[3];
+          auto & defVector = def[3];
+          for (std::size_t k = 0; k < n; ++k) {
+            auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
+            hitVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::wizard_premade[lvlPC].attack(npc, localRNG);
+            defVector(lvlNPC - 1, lvlPC - 1, k) = dndSim::attack_wizard(lvlPC, npc, localRNG);
+          }
         }
     };
 
