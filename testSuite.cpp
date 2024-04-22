@@ -32,9 +32,20 @@ void usage(){
     std::cout << "Have fun!" << std::endl;
 }
 
-std::shared_ptr<std::vector<std::vector<std::vector<unsigned char>>>> initializeHitVector(int n, int dim1, int dim2)
+template<typename T>
+struct mdspan {
+  T* data;
+  std::array<std::size_t, 3> dims;
+
+  T& operator()(std::size_t lvl, std::size_t lvl2, std::size_t n) {
+    const std::size_t index = n + lvl2 * dims[2] + lvl * dims[2] * dims[1];
+    return data[index];
+  }
+};
+
+std::shared_ptr<std::vector<unsigned char>> initializeHitVector(unsigned int n, int dim1, int dim2)
 {
-    auto hitVector = std::make_shared<std::vector<std::vector<std::vector<unsigned char>>>>(dim1, std::vector<std::vector<unsigned char>>(dim2, std::vector<unsigned char>(n, false)));
+    auto hitVector = std::make_shared<std::vector<unsigned char>>(n * dim1 * dim2, false);
     return hitVector;
 }
 
@@ -137,16 +148,16 @@ int main(int argc, char* argv[]){
     pre_builds_defend[2] = rogue_defend;
     pre_builds_defend[3] = wizard_defend;
     // Create a vector of the hit vectors for each character class
-    auto hits = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<unsigned char>>>>>(4);
-    hits[0] = barbarian_hits;
-    hits[1] = cleric_hits;
-    hits[2] = rogue_hits;
-    hits[3] = wizard_hits;
-    auto def = std::vector<std::shared_ptr<std::vector<std::vector<std::vector<unsigned char>>>>>(4);
-    def[0] = barbarian_def;
-    def[1] = cleric_def;
-    def[2] = rogue_def;
-    def[3] = wizard_def;
+    std::vector<mdspan<unsigned char>> hits(4);
+    hits[0] = mdspan<unsigned char>{barbarian_hits->data(), {test_levels.size(), test_levels.size(), n}};
+    hits[1] = mdspan<unsigned char>{cleric_hits->data(), {test_levels.size(), test_levels.size(), n}};
+    hits[2] = mdspan<unsigned char>{rogue_hits->data(),  {test_levels.size(), test_levels.size(), n}};
+    hits[3] = mdspan<unsigned char>{wizard_hits->data(), {test_levels.size(), test_levels.size(), n}};
+    std::vector<mdspan<unsigned char>> def(4);
+    def[0] = mdspan<unsigned char>{barbarian_def->data(),  {test_levels.size(), test_levels.size(), n}};
+    def[1] = mdspan<unsigned char>{cleric_def->data(),  {test_levels.size(), test_levels.size(), n}};
+    def[2] = mdspan<unsigned char>{rogue_def->data(),  {test_levels.size(), test_levels.size(), n}};
+    def[3] = mdspan<unsigned char>{wizard_def->data(),  {test_levels.size(), test_levels.size(), n}};
 
     // Run the simulation for each character class and level
     // The actual loop order is pretty irrelevant, so long as we get all the combinations
@@ -172,8 +183,8 @@ int main(int argc, char* argv[]){
             for (auto lvlPC : test_levels) {
                 for (int k = 0; k < n; ++k) {
                     auto const& npc = dndSim::random_encounter(lvlNPC, dndSim::EncType::any, localRNG);
-                    (*hits[l])[lvlNPC - 1][lvlPC - 1][k] = pre_builds[l](lvlPC, npc, localRNG);
-                    (*def[l])[lvlNPC - 1][lvlPC - 1][k] = pre_builds_defend[l](lvlPC, npc, localRNG);
+                    hits[l](lvlNPC - 1, lvlPC - 1, k) = pre_builds[l](lvlPC, npc, localRNG);
+                    def[l] (lvlNPC - 1, lvlPC - 1, k) = pre_builds_defend[l](lvlPC, npc, localRNG);
                 }
             }
         }
@@ -215,18 +226,16 @@ int main(int argc, char* argv[]){
     for (auto lvlPC : test_levels){
         for(auto lvlNPC : test_levels){
             for (int l = 0; l < 4; ++l){
-                PC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
-                    hits[l]->at(lvlNPC-1)[lvlPC-1].begin(), hits[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
-                     / static_cast<float>(n);
+              PC_hit_rate[l][lvlNPC-1][lvlPC-1] = std::accumulate(&hits[l](lvlNPC-1, lvlPC-1, 0), &hits[l](lvlNPC-1, lvlPC-1, n), 0)
+                / static_cast<float>(n);
             }
         }
     }
     for (auto lvlPC : test_levels){
         for(auto lvlNPC : test_levels){
             for (int l = 0; l < 4; ++l){
-                NPC_hit_rate[l][lvlNPC-1][lvlPC-1] = static_cast<float>(std::accumulate(
-                    def[l]->at(lvlNPC-1)[lvlPC-1].begin(), def[l]->at(lvlNPC-1)[lvlPC-1].end(), 0))
-                     / static_cast<float>(n);
+              NPC_hit_rate[l][lvlNPC-1][lvlPC-1] = std::accumulate(&def[l](lvlNPC-1, lvlPC-1, 0), &def[l](lvlNPC-1, lvlPC-1, n), 0)
+                / static_cast<float>(n);
             }
         }
     }
