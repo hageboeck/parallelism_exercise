@@ -77,7 +77,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
     std::string nArg = argv[1];
-    int n = std::stoi(argv[1]);
+    std::size_t n = std::stoul(argv[1]);
     if (n < 1){
         usage();
         return 1;
